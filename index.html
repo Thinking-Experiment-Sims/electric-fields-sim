@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Electric Fields &amp; Potentials Lab | The Thinking Experiment</title>
+<meta name="description" content="Interactive simulation for mapping electric fields and potentials. Students probe voltage across three electrode configurations.">
+<link rel="icon" type="image/png" sizes="32x32" href="https://vladimirlopez.github.io/the-thinking-experiment/assets/favicon-32.png"/>
+<link rel="stylesheet" href="../_shared/sim-core.css">
+<style>
+:root { --pos:#cc2222; --neg:#2244cc; }
+[data-theme="dark"]:root { --pos:#ff7777; --neg:#6688ff; }
+
+.vm-wrap { background:#0d0d0d; border-radius:10px; padding:.8rem; text-align:center; border:2px solid #2a2a2a; box-shadow:inset 0 0 20px rgba(0,200,100,.06); }
+.vm-val  { font-family:'Courier New',monospace; font-size:2.5rem; font-weight:700; color:#00ff88; text-shadow:0 0 10px rgba(0,255,136,.55); letter-spacing:2px; min-height:2.8rem; line-height:1; }
+.vm-lbl  { color:#555; font-size:.68rem; text-transform:uppercase; letter-spacing:3px; margin-top:.2rem; }
+[data-theme="dark"] .vm-wrap { background:#050508; border-color:#1e1e2e; }
+
+.case-row { display:flex; gap:.3rem; }
+.case-btn { flex:1; padding:.35rem .2rem; font-size:.78rem; text-align:center; }
+.case-btn.on { background:linear-gradient(160deg,#0d839f,#0b5f77); color:#fff; border-color:#0a5d74; }
+[data-theme="dark"] .case-btn.on { background:linear-gradient(160deg,#d8b767,#c8a24a); color:#241a08; border-color:#b88f35; }
+
+.data-scroll { max-height:175px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm); }
+.data-scroll table { width:100%; }
+
+.t-banner { display:none; align-items:center; gap:.6rem; margin-top:.5rem; padding:.45rem 1rem; background:linear-gradient(90deg,#0f4068,#1a5276); color:#fff; border-radius:var(--radius-sm); font-weight:700; font-size:.87rem; }
+.t-banner.on { display:flex; }
+.t-banner button { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.3); padding:.2rem .55rem; font-size:.78rem; }
+
+.t-tabs { display:flex; gap:.3rem; margin-bottom:.55rem; }
+.t-tabs .tab-btn { flex:1; font-size:.8rem; padding:.38rem .2rem; }
+
+.rm { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.32rem .48rem; font-size:.76rem; color:var(--muted); }
+.rm .v { font-size:.93rem; font-weight:700; color:var(--ink); display:block; margin-top:.08rem; }
+
+.wk-res { text-align:center; font-weight:700; font-size:.92rem; padding:.5rem; border-radius:var(--radius-sm); border:2px solid; }
+.wk-pos { background:#e6fff2; color:#1a7f4e; border-color:#a3d9bb; }
+.wk-neg { background:#fff0f0; color:#c0392b; border-color:#f5b8b2; }
+.wk-zer { background:var(--card); color:var(--muted); border-color:var(--border); }
+[data-theme="dark"] .wk-pos { background:rgba(26,127,78,.15); color:#4dff9c; border-color:#1a7f4e; }
+[data-theme="dark"] .wk-neg { background:rgba(192,57,43,.15); color:#ff8080; border-color:#c0392b; }
+
+.phys-box { padding:.55rem .7rem; background:linear-gradient(135deg,#f0f8ff,#e8f4fd); border-left:4px solid var(--accent); border-radius:var(--radius-sm); font-size:.81rem; line-height:1.55; color:var(--ink); margin-top:.5rem; }
+[data-theme="dark"] .phys-box { background:linear-gradient(135deg,#1b2330,#141e2e); }
+
+.bdg { display:inline-block; width:15px; height:15px; border-radius:50%; text-align:center; line-height:15px; font-size:.62rem; font-weight:800; color:#fff; }
+.bdg-a { background:#e67e22; } .bdg-b { background:#8e44ad; }
+
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); align-items:center; justify-content:center; z-index:999; }
+.modal-bg.open { display:flex; }
+.modal-box { background:var(--card); border-radius:var(--radius); padding:1.7rem; width:min(340px,90vw); box-shadow:var(--shadow); border:1px solid var(--border); }
+.modal-box h3 { font-size:1.15rem; margin-bottom:.45rem; }
+.modal-box label { margin-top:.65rem; }
+.modal-box input { width:100%; margin-top:.22rem; }
+
+.v-legend { display:flex; align-items:center; gap:.45rem; font-size:.73rem; color:var(--muted); margin-top:.28rem; justify-content:center; }
+.v-grad { width:110px; height:9px; border-radius:5px; background:linear-gradient(to right,#0000ff,#00ffff,#00ff00,#ffff00,#ff6600,#ff0000); border:1px solid rgba(0,0,0,.12); }
+
+#fieldCanvas { touch-action:none; cursor:crosshair; }
+#energyCanvas { display:block; width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); }
+</style>
+</head>
+<body>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="shell">
+
+  <!-- Hero -->
+  <section class="hero" style="margin-top:.7rem">
+    <div class="hero-top">
+      <div>
+        <div class="kicker">Physics Lab Simulation</div>
+        <h1>Electric Fields &amp; Potentials</h1>
+        <p class="subtitle">Probe voltage at different points — just like the real Pasco conducting-paper lab. Record data, then sketch your own equipotential lines and field lines on paper.</p>
+      </div>
+      <div style="display:flex;gap:.4rem;align-items:flex-start;flex-shrink:0">
+        <button id="tModeBtn" class="ghost">🔒 Teacher Mode</button>
+        <button id="themeBtn" class="ghost">🌙 Dark</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Teacher banner -->
+  <div class="t-banner" id="tBanner">
+    👨‍🏫 Teacher Mode Active
+    <div style="flex:1"></div>
+    <button id="exitTBtn">Exit</button>
+  </div>
+
+  <!-- App layout -->
+  <div class="app-layout" style="margin-top:.6rem">
+
+    <!-- === Canvas panel === -->
+    <div class="panel wide" style="padding:.7rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:.4rem">
+        <h2 id="caseHead" style="font-size:.92rem;color:var(--accent);margin:0">Case I — Two Circular Electrodes</h2>
+        <div class="case-row">
+          <button class="case-btn on" id="cb1" onclick="setCase(1)">Case I</button>
+          <button class="case-btn"    id="cb2" onclick="setCase(2)">Case II</button>
+          <button class="case-btn"    id="cb3" onclick="setCase(3)">Case III</button>
+        </div>
+      </div>
+      <canvas id="fieldCanvas" class="sim-canvas"></canvas>
+      <div class="v-legend">
+        <span>0 V</span><div class="v-grad"></div><span>6 V</span>
+        <span style="margin-left:.6rem;font-size:.7rem">1 gu = 1 cm · Pasco paper scale</span>
+      </div>
+    </div>
+
+    <!-- === Controls panel === -->
+    <div class="panel narrow" id="ctrlPanel">
+
+      <!-- STUDENT panel -->
+      <div id="sPanel">
+        <div class="panel-head" style="margin-bottom:.5rem">
+          <div class="kicker">Student Lab</div>
+          <h2 style="font-size:1rem">Probe &amp; Voltmeter</h2>
+        </div>
+        <div class="vm-wrap">
+          <div class="vm-val" id="vmVal">--.--</div>
+          <div class="vm-lbl">Volts DC</div>
+        </div>
+        <p class="hint" style="margin-top:.4rem;font-size:.81rem">Hover to read voltage. Click to record a point.</p>
+        <div class="button-row compact" style="margin-top:.38rem">
+          <button class="primary" id="recBtn" onclick="recordPt()" style="flex:2">📍 Record Point</button>
+          <button onclick="clearPts()">🗑 Clear</button>
+        </div>
+        <div style="margin-top:.6rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.22rem">
+            <strong style="font-size:.83rem">Data Table</strong>
+            <span id="ptCnt" style="font-size:.73rem;color:var(--muted)">0 pts</span>
+          </div>
+          <div class="data-scroll">
+            <table><thead><tr><th>#</th><th>X (gu)</th><th>Y (gu)</th><th>V (V)</th></tr></thead>
+            <tbody id="dBody"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:.55rem;font-size:.79rem">No points yet</td></tr></tbody></table>
+          </div>
+        </div>
+        <details style="margin-top:.6rem">
+          <summary>Lab Procedure</summary>
+          <ol style="margin:.38rem 0 0 1rem;font-size:.81rem;color:var(--muted);line-height:1.7">
+            <li>Select a Case (I, II, or III)</li>
+            <li>Hover canvas — probe reads voltage</li>
+            <li>Find 4–5 points at the same voltage (e.g. 5 V)</li>
+            <li>Record each — write coordinates on your paper</li>
+            <li>Connect the dots → that's an equipotential line!</li>
+            <li>Repeat for 1 V, 2 V, 3 V, 4 V</li>
+            <li>Draw field lines perpendicular to equipotentials</li>
+          </ol>
+        </details>
+      </div><!-- /sPanel -->
+
+      <!-- TEACHER panel -->
+      <div id="tPanel" class="hidden">
+        <div class="t-tabs">
+          <button class="tab-btn active" id="tfBtn" onclick="setTTab('field')">📊 Field View</button>
+          <button class="tab-btn"        id="twBtn" onclick="setTTab('work')">⚡ Work Demo</button>
+        </div>
+
+        <!-- Field Visualizer -->
+        <div id="tfPanel">
+          <div class="panel-head" style="margin-bottom:.42rem">
+            <div class="kicker">Teacher Overlay</div>
+            <h2 style="font-size:1rem">Field Visualizer</h2>
+          </div>
+          <div class="toggle-group" style="margin-top:.15rem">
+            <label class="toggle-line"><input type="checkbox" id="chkEq"  checked onchange="redraw()"> 🌈 Equipotential Lines</label>
+            <label class="toggle-line"><input type="checkbox" id="chkFL"  checked onchange="redraw()"> ➡️ Field Lines</label>
+            <label class="toggle-line"><input type="checkbox" id="chkArr"        onchange="redraw()"> 🏹 Field Arrow Grid</label>
+            <label class="toggle-line"><input type="checkbox" id="chkHt"         onchange="redraw()"> 🎨 Voltage Heatmap</label>
+          </div>
+          <div class="status" style="margin-top:.55rem;font-size:.81rem">
+            💡 Probe still active — hover to read voltage and guide students through the map.
+          </div>
+        </div>
+
+        <!-- Work Demo -->
+        <div id="twPanel" class="hidden">
+          <div class="panel-head" style="margin-bottom:.42rem">
+            <div class="kicker">Teacher Demo</div>
+            <h2 style="font-size:1rem">Work on a Charge</h2>
+          </div>
+          <p class="hint" style="font-size:.79rem">Drag <span class="bdg bdg-a">A</span> and <span class="bdg bdg-b">B</span> on the canvas to set start/end points.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.32rem;margin:.4rem 0">
+            <div class="rm"><span><span class="bdg bdg-a">A</span> V<sub>A</sub></span><span class="v" id="vaD">-- V</span></div>
+            <div class="rm"><span><span class="bdg bdg-b">B</span> V<sub>B</sub></span><span class="v" id="vbD">-- V</span></div>
+            <div class="rm"><span>ΔV = V<sub>A</sub>−V<sub>B</sub></span><span class="v" id="dvD">--</span></div>
+            <div class="rm"><span>W = q·ΔV</span><span class="v" id="wkD">--</span></div>
+          </div>
+          <label style="margin-top:.3rem;font-size:.83rem">
+            Charge q: <span id="qDisp" style="font-weight:700;color:var(--accent)">+1 μC</span>
+            <input type="range" id="qSlider" min="-3" max="3" step="1" value="1" oninput="updateQ()">
+          </label>
+          <div id="wkRes" class="wk-res wk-zer" style="margin-top:.42rem">Set A and B on the field</div>
+          <div class="button-row compact" style="margin-top:.38rem">
+            <button class="primary" id="animBtn" onclick="startAnim()">▶ Animate</button>
+            <button onclick="resetAnim()">↩ Reset</button>
+          </div>
+          <canvas id="energyCanvas" height="110" style="margin-top:.48rem"></canvas>
+          <div class="phys-box" id="physBox">Place A and B on the field to begin.</div>
+          <details style="margin-top:.48rem">
+            <summary>Key Equations</summary>
+            <div style="margin-top:.32rem;font-size:.8rem;line-height:1.78;color:var(--muted)">
+              <b style="color:var(--ink)">W = q·ΔV = q·(V<sub>A</sub>−V<sub>B</sub>)</b><br>Work by field on charge q moving A→B<br>
+              <b style="color:var(--ink)">ΔKE = W</b> (Work-Energy Theorem)<br>
+              <b style="color:var(--ink)">ΔPE = −W</b> (Conservative field)<br>
+              <hr style="border-color:var(--border);margin:.35rem 0">
+              <span style="color:#1a7f4e">W &gt; 0 → spontaneous (field pushes)</span><br>
+              <span style="color:#c0392b">W &lt; 0 → needs external work (push)</span><br>
+              <span>W = 0 → equipotential path, no energy change</span>
+            </div>
+          </details>
+        </div><!-- /twPanel -->
+      </div><!-- /tPanel -->
+
+    </div><!-- /narrow -->
+  </div><!-- /app-layout -->
+</div><!-- /shell -->
+
+<!-- Login modal -->
+<div class="modal-bg" id="loginModal">
+  <div class="modal-box">
+    <h3>🔒 Teacher Mode</h3>
+    <p style="color:var(--muted);font-size:.86rem">Enter the password to unlock field visualizer and work demo.</p>
+    <label>Password<input type="password" id="pwIn" placeholder="Enter password…" onkeydown="if(event.key==='Enter')tryLogin()"></label>
+    <div id="pwErr" class="status error hidden" style="margin-top:.38rem;font-size:.8rem">Incorrect password.</div>
+    <div class="button-row" style="margin-top:.85rem">
+      <button class="primary" onclick="tryLogin()">Unlock</button>
+      <button onclick="closeLogin()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// Electric Fields & Potentials Lab Simulation
+// The Thinking Experiment  ·  Physics
+// ═══════════════════════════════════════════════════════
+
+// ── Constants ────────────────────────────────────────
+const GW=28, GH=22, PX=30;          // grid units, px/unit
+const CW=GW*PX, CH=GH*PX;           // canvas pixels (840×660)
+
+// ── State ─────────────────────────────────────────────
+let mode='student';                  // student | teacher-field | teacher-work
+let activeCase=1;
+let probeX=14, probeY=11, probeOn=false, probeV=0;
+let ptA={gx:7,  gy:11};
+let ptB={gx:21, gy:11};
+let drag=null;
+let workQ=1;                         // μC, signed
+let points=[];
+let animating=false, animT=0, animRAF=null, animStart=null;
+const ANIM_MS=2600;
+const CALIB={};
+
+// ── roundRect polyfill ───────────────────────────────
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    const R=Math.min(Array.isArray(r)?r[0]:r||0,Math.min(w,h)/2);
+    this.moveTo(x+R,y); this.arcTo(x+w,y,x+w,y+h,R);
+    this.arcTo(x+w,y+h,x,y+h,R); this.arcTo(x,y+h,x,y,R);
+    this.arcTo(x,y,x+w,y,R); this.closePath();
+  };
+}
+
+// ── Electrode helpers ─────────────────────────────────
+function barQ(x1,cy,x2,Q,n=20){
+  return Array.from({length:n},(_,i)=>({x:x1+(n===1?.5:i/(n-1))*(x2-x1),y:cy,q:Q/n}));
+}
+
+// ── Configs ──────────────────────────────────────────
+const CFG={
+  1:{label:'Case I — Two Circular Electrodes',
+     pos:{type:'circle',cx:7, cy:6, r:2.5,charges:[{x:7, y:6, q:1}],  calX:7, calY:8.55},
+     neg:{type:'circle',cx:7, cy:16,r:2.5,charges:[{x:7, y:16,q:-1}], calX:7, calY:13.45}},
+  2:{label:'Case II — Parallel Plate Electrodes',
+     pos:{type:'bar',x1:7, y1:4, x2:21,y2:6, cy:5, charges:barQ(7,5,21,1,20),  calX:14,calY:6.15},
+     neg:{type:'bar',x1:7, y1:16,x2:21,y2:18,cy:17,charges:barQ(7,17,21,-1,20),calX:14,calY:15.85}},
+  3:{label:'Case III — Circle and Bar',
+     pos:{type:'circle',cx:10,cy:6, r:2.5,charges:[{x:10,y:6,q:1}],  calX:10,calY:8.55},
+     neg:{type:'bar',x1:12,y1:16,x2:22,y2:18,cy:17,charges:barQ(12,17,22,-1,15),calX:17,calY:15.85}}
+};
+
+// ── Physics ──────────────────────────────────────────
+function rawV(gx,gy,cn){
+  let V=0;
+  for(const c of [...CFG[cn].pos.charges,...CFG[cn].neg.charges]){
+    const r=Math.hypot(gx-c.x,gy-c.y);
+    if(r>0.04) V+=c.q/r;
+  }
+  return V;
+}
+function cal(cn){
+  if(CALIB[cn]) return CALIB[cn];
+  const {pos,neg}=CFG[cn];
+  return CALIB[cn]={Vp:rawV(pos.calX,pos.calY,cn),Vn:rawV(neg.calX,neg.calY,cn)};
+}
+function dV(gx,gy,cn=activeCase){
+  const {Vp,Vn}=cal(cn);
+  return 6*(rawV(gx,gy,cn)-Vn)/(Vp-Vn);
+}
+function eF(gx,gy,cn=activeCase){
+  const h=.12;
+  return{Ex:-(dV(gx+h,gy,cn)-dV(gx-h,gy,cn))/(2*h),
+         Ey:-(dV(gx,gy+h,cn)-dV(gx,gy-h,cn))/(2*h)};
+}
+function inEl(gx,gy,cn=activeCase){
+  for(const el of[CFG[cn].pos,CFG[cn].neg]){
+    if(el.type==='circle'&&Math.hypot(gx-el.cx,gy-el.cy)<el.r) return true;
+    if(el.type==='bar'&&gx>=el.x1&&gx<=el.x2&&gy>=el.y1&&gy<=el.y2) return true;
+  }
+  return false;
+}
+function inNeg(gx,gy,cn=activeCase){
+  const el=CFG[cn].neg,m=.22;
+  if(el.type==='circle') return Math.hypot(gx-el.cx,gy-el.cy)<el.r+m;
+  return gx>=el.x1-m&&gx<=el.x2+m&&gy>=el.y1-m&&gy<=el.y2+m;
+}
+function inPos(gx,gy,cn=activeCase){
+  const el=CFG[cn].pos,m=.22;
+  if(el.type==='circle') return Math.hypot(gx-el.cx,gy-el.cy)<el.r+m;
+  return gx>=el.x1-m&&gx<=el.x2+m&&gy>=el.y1-m&&gy<=el.y2+m;
+}
+function safeV(pt){return inEl(pt.gx,pt.gy)?3:dV(pt.gx,pt.gy);}
+
+// ── Canvas ───────────────────────────────────────────
+const cvs=document.getElementById('fieldCanvas');
+const ctx=cvs.getContext('2d');
+cvs.width=CW; cvs.height=CH;
+const ecvs=document.getElementById('energyCanvas');
+const ectx=ecvs.getContext('2d');
+
+function g2p(gx,gy){return{px:gx*PX,py:gy*PX};}
+function p2g(px,py){return{gx:px/PX,gy:py/PX};}
+const dk=()=>document.documentElement.getAttribute('data-theme')==='dark';
+
+// ── Mouse events ──────────────────────────────────────
+function cPos(e){
+  const r=cvs.getBoundingClientRect();
+  return p2g((e.clientX-r.left)*CW/r.width,(e.clientY-r.top)*CH/r.height);
+}
+cvs.addEventListener('mousemove',e=>{
+  const{gx,gy}=cPos(e);
+  probeX=Math.max(.1,Math.min(GW-.1,gx));
+  probeY=Math.max(.1,Math.min(GH-.1,gy));
+  probeOn=true;
+  if(drag&&mode==='teacher-work'){drag.gx=probeX;drag.gy=probeY;updateWork();}
+  if(!inEl(probeX,probeY)) probeV=dV(probeX,probeY);
+  redraw(); setVM();
+});
+cvs.addEventListener('mouseleave',()=>{probeOn=false;drag=null;redraw();});
+cvs.addEventListener('mousedown',e=>{
+  const{gx,gy}=cPos(e);
+  if(mode==='teacher-work'){
+    if(Math.hypot(gx-ptA.gx,gy-ptA.gy)<1.3){drag=ptA;return;}
+    if(Math.hypot(gx-ptB.gx,gy-ptB.gy)<1.3){drag=ptB;return;}
+  }
+  if(mode==='student') recordPt();
+});
+cvs.addEventListener('mouseup',()=>{drag=null;});
+cvs.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  cvs.dispatchEvent(new MouseEvent('mousemove',{clientX:e.touches[0].clientX,clientY:e.touches[0].clientY}));
+},{passive:false});
+
+// ── Color helpers ─────────────────────────────────────
+function vCol(t){
+  t=Math.max(0,Math.min(1,t));
+  return`rgb(${Math.round(255*Math.max(0,2*t-1))},${Math.round(255*(t<.5?2*t:2-2*t))},${Math.round(255*Math.max(0,1-2*t))})`;
+}
+function arrw(x,y,dx,dy,sz){
+  const a=Math.atan2(dy,dx);
+  ctx.save(); ctx.translate(x,y); ctx.rotate(a);
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-sz,-sz*.38); ctx.lineTo(-sz,sz*.38);
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+// ── Main render ───────────────────────────────────────
+function redraw(){
+  ctx.clearRect(0,0,CW,CH);
+  drawBg();
+  if(mode!=='student'){
+    if(document.getElementById('chkHt')?.checked)  drawHeat();
+    if(document.getElementById('chkEq')?.checked)  drawEquip();
+    if(document.getElementById('chkFL')?.checked)  drawFLines();
+    if(document.getElementById('chkArr')?.checked) drawArrows();
+  }
+  drawGrid();
+  drawElecs();
+  if(mode==='teacher-work'){drawWPts();if(animating||animT>0)drawParticle();}
+  if(probeOn&&!inEl(probeX,probeY)) drawProbe();
+}
+
+function drawBg(){
+  ctx.fillStyle=dk()?'#131920':'#f8f5ed';
+  ctx.fillRect(0,0,CW,CH);
+}
+
+function drawGrid(){
+  const d=dk();
+  for(let x=0;x<=GW;x++){
+    const maj=x%5===0;
+    ctx.strokeStyle=d?(maj?'rgba(180,210,240,.2)':'rgba(180,210,240,.06)'):(maj?'rgba(70,100,150,.35)':'rgba(70,100,150,.1)');
+    ctx.lineWidth=maj?.8:.4;
+    ctx.beginPath();ctx.moveTo(x*PX,0);ctx.lineTo(x*PX,CH);ctx.stroke();
+  }
+  for(let y=0;y<=GH;y++){
+    const maj=y%5===0;
+    ctx.strokeStyle=d?(maj?'rgba(180,210,240,.2)':'rgba(180,210,240,.06)'):(maj?'rgba(70,100,150,.35)':'rgba(70,100,150,.1)');
+    ctx.lineWidth=maj?.8:.4;
+    ctx.beginPath();ctx.moveTo(0,y*PX);ctx.lineTo(CW,y*PX);ctx.stroke();
+  }
+  ctx.fillStyle=d?'rgba(170,195,225,.45)':'rgba(65,95,140,.55)';
+  ctx.font='10px IBM Plex Sans,sans-serif'; ctx.textAlign='center';
+  for(let x=0;x<=GW;x+=5) ctx.fillText(x,x*PX,CH-2);
+  ctx.textAlign='right';
+  for(let y=0;y<=GH;y+=5) ctx.fillText(y,16,y*PX+4);
+  ctx.fillStyle=d?'rgba(170,195,225,.5)':'rgba(65,95,140,.6)';
+  ctx.textAlign='center'; ctx.fillText('X (cm)',CW/2,CH-1);
+}
+
+function drawElecs(){
+  const{pos,neg}=CFG[activeCase];
+  drawEl(pos,true); drawEl(neg,false);
+}
+function drawEl(el,isP){
+  const d=dk();
+  const fill=isP?(d?'#4a1515':'#ffe8e8'):(d?'#10204a':'#e8eeff');
+  const strk=isP?(d?'#ff7777':'#cc2222'):(d?'#6688ff':'#2244cc');
+  const txt =isP?(d?'#ff9999':'#cc0000'):(d?'#99aaff':'#0033cc');
+  const sym =isP?'+':'−';
+  ctx.save();
+  if(el.type==='circle'){
+    const{px,py}=g2p(el.cx,el.cy); const rp=el.r*PX;
+    const gr=ctx.createRadialGradient(px,py,rp*.2,px,py,rp*2.2);
+    gr.addColorStop(0,isP?'rgba(255,80,80,.16)':'rgba(80,80,255,.16)'); gr.addColorStop(1,'transparent');
+    ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,rp*2.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px,py,rp,0,Math.PI*2);
+    ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=strk; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.fillStyle=txt; ctx.font=`bold ${Math.round(rp*.95)}px IBM Plex Sans,sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(sym,px,py);
+  } else {
+    const{px:bx,py:by}=g2p(el.x1,el.y1); const bw=(el.x2-el.x1)*PX,bh=(el.y2-el.y1)*PX;
+    const ey=isP?by+bh:by;
+    const gr=ctx.createLinearGradient(bx,ey-25,bx,ey+25);
+    gr.addColorStop(0,isP?'rgba(255,80,80,.14)':'transparent');
+    gr.addColorStop(1,isP?'transparent':'rgba(80,80,255,.14)');
+    ctx.fillStyle=gr; ctx.fillRect(bx,by-30,bw,bh+60);
+    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,6);
+    ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=strk; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.fillStyle=txt; ctx.font=`bold ${Math.min(Math.round(bh*.68),24)}px IBM Plex Sans,sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(sym,bx+bw/2,by+bh/2);
+  }
+  ctx.restore();
+}
+
+function drawProbe(){
+  const{px,py}=g2p(probeX,probeY);
+  const t=Math.max(0,Math.min(1,probeV/6)); const col=vCol(t);
+  ctx.save();
+  const gr=ctx.createRadialGradient(px,py,3,px,py,20);
+  gr.addColorStop(0,col.replace('rgb','rgba').replace(')',',0.45)')); gr.addColorStop(1,'transparent');
+  ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,20,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2);
+  ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  ctx.strokeStyle=col; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  for(const[x1,y1,x2,y2] of[[px-17,py,px-9,py],[px+9,py,px+17,py],[px,py-17,px,py-9],[px,py+9,px,py+17]]){
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  const vs=probeV.toFixed(2)+' V', cs=`(${probeX.toFixed(1)}, ${probeY.toFixed(1)})`;
+  const tw=Math.max(ctx.measureText(vs).width,ctx.measureText(cs).width)+16;
+  const tx=Math.min(px+14,CW-tw-6), ty=Math.max(4,py-48);
+  ctx.fillStyle='rgba(10,15,25,.9)'; ctx.beginPath(); ctx.roundRect(tx,ty,tw,40,6); ctx.fill();
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillStyle='#fff'; ctx.font='bold 13px IBM Plex Sans,sans-serif'; ctx.fillText(vs,tx+8,ty+12);
+  ctx.fillStyle='rgba(170,205,225,.88)'; ctx.font='10px IBM Plex Sans,sans-serif'; ctx.fillText(cs,tx+8,ty+28);
+  ctx.restore();
+}
+
+// ── Heatmap ───────────────────────────────────────────
+function drawHeat(){
+  const res=5, cols=Math.ceil(CW/res), rows=Math.ceil(CH/res);
+  ctx.save(); ctx.globalAlpha=.28;
+  for(let c=0;c<cols;c++) for(let r=0;r<rows;r++){
+    const gx=(c*res+res/2)/PX, gy=(r*res+res/2)/PX;
+    if(inEl(gx,gy)) continue;
+    ctx.fillStyle=vCol(Math.max(0,Math.min(1,dV(gx,gy)/6)));
+    ctx.fillRect(c*res,r*res,res,res);
+  }
+  ctx.restore();
+}
+
+// ── Equipotentials (Marching Squares) ─────────────────
+function drawEquip(){
+  const RX=84, RY=Math.round(84*GH/GW);
+  const vg=new Float32Array(RX*RY);
+  for(let j=0;j<RY;j++) for(let i=0;i<RX;i++){
+    const gx=(i/(RX-1))*GW, gy=(j/(RY-1))*GH;
+    vg[j*RX+i]=inEl(gx,gy)?NaN:dV(gx,gy);
+  }
+  for(const lv of[1,2,3,4,5]){
+    ctx.strokeStyle=vCol(lv/6); ctx.lineWidth=2.2; ctx.beginPath();
+    for(let j=0;j<RY-1;j++) for(let i=0;i<RX-1;i++){
+      const v00=vg[j*RX+i],v10=vg[j*RX+i+1],v01=vg[(j+1)*RX+i],v11=vg[(j+1)*RX+i+1];
+      if([v00,v10,v01,v11].some(isNaN)) continue;
+      const x0=(i/(RX-1))*CW,x1=((i+1)/(RX-1))*CW;
+      const y0=(j/(RY-1))*CH,y1=((j+1)/(RY-1))*CH;
+      const cross=(a,b)=>((a<lv)!==(b<lv))?(lv-a)/(b-a):null;
+      const tT=cross(v00,v10),tR=cross(v10,v11),tB=cross(v01,v11),tL=cross(v00,v01);
+      const pts=[];
+      if(tT!==null) pts.push({x:x0+tT*(x1-x0),y:y0});
+      if(tR!==null) pts.push({x:x1,            y:y0+tR*(y1-y0)});
+      if(tB!==null) pts.push({x:x0+tB*(x1-x0),y:y1});
+      if(tL!==null) pts.push({x:x0,            y:y0+tL*(y1-y0)});
+      if(pts.length>=2){ctx.moveTo(pts[0].x,pts[0].y);ctx.lineTo(pts[1].x,pts[1].y);}
+      if(pts.length===4){ctx.moveTo(pts[2].x,pts[2].y);ctx.lineTo(pts[3].x,pts[3].y);}
+    }
+    ctx.stroke();
+    eqLabel(lv);
+  }
+}
+function eqLabel(lv){
+  const sx=GW*.8, step=.28;
+  for(let gy=1.5;gy<GH-1.5;gy+=step){
+    if(inEl(sx,gy)||inEl(sx,gy+step)) continue;
+    const v1=dV(sx,gy),v2=dV(sx,gy+step);
+    if((v1-lv)*(v2-lv)<0){
+      const iy=gy+step*(lv-v1)/(v2-v1);
+      const{px,py}=g2p(sx,iy); const col=vCol(lv/6);
+      const lab=lv+' V', tw=ctx.measureText(lab).width+10;
+      ctx.save();
+      ctx.fillStyle='rgba(255,255,255,.92)'; ctx.strokeStyle=col; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.roundRect(px-tw/2,py-9,tw,18,4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle=col; ctx.font='bold 11px IBM Plex Sans,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(lab,px,py);
+      ctx.restore(); break;
+    }
+  }
+}
+
+// ── Field Lines ───────────────────────────────────────
+function drawFLines(){
+  const d=dk(), col=d?'rgba(190,205,255,.68)':'rgba(25,35,145,.68)';
+  ctx.strokeStyle=ctx.fillStyle=col; ctx.lineWidth=1.55;
+  for(const s of seeds(CFG[activeCase].pos)) traceLine(s.gx,s.gy);
+}
+function seeds(el){
+  const n=14;
+  if(el.type==='circle') return Array.from({length:n},(_,i)=>{
+    const a=(i/n)*2*Math.PI+.12;
+    return{gx:el.cx+(el.r+.42)*Math.cos(a),gy:el.cy+(el.r+.42)*Math.sin(a)};
+  });
+  return Array.from({length:n},(_,i)=>{
+    const t=(i+.5)/n;
+    return{gx:el.x1+t*(el.x2-el.x1),gy:el.y2+.38};
+  });
+}
+function traceLine(sgx,sgy){
+  let gx=sgx,gy=sgy; const step=.2,MAX=450;
+  ctx.beginPath(); ctx.moveTo(gx*PX,gy*PX);
+  const aPts=[];
+  for(let s=0;s<MAX;s++){
+    const{Ex,Ey}=eF(gx,gy); const mag=Math.hypot(Ex,Ey);
+    if(mag<.001) break;
+    const nx=Ex/mag,ny=Ey/mag;
+    const ngx=gx+step*nx,ngy=gy+step*ny;
+    if(ngx<.3||ngx>GW-.3||ngy<.3||ngy>GH-.3) break;
+    if(inNeg(ngx,ngy)) break;
+    if(s>3&&inPos(ngx,ngy)) break;
+    gx=ngx; gy=ngy; ctx.lineTo(gx*PX,gy*PX);
+    if(s%38===37) aPts.push({x:gx*PX,y:gy*PX,nx,ny});
+  }
+  ctx.stroke();
+  for(const ap of aPts) arrw(ap.x,ap.y,ap.nx,ap.ny,6);
+}
+
+// ── Arrow grid ────────────────────────────────────────
+function drawArrows(){
+  const d=dk(),col=d?'rgba(180,195,255,.5)':'rgba(35,35,165,.5)';
+  ctx.strokeStyle=ctx.fillStyle=col; ctx.lineWidth=1;
+  const sp=2.5;
+  for(let gx=sp;gx<GW;gx+=sp) for(let gy=sp;gy<GH;gy+=sp){
+    if(inEl(gx,gy)) continue;
+    const{Ex,Ey}=eF(gx,gy); const mag=Math.hypot(Ex,Ey);
+    if(mag<.01) continue;
+    const nx=Ex/mag,ny=Ey/mag,len=13;
+    const{px,py}=g2p(gx,gy);
+    ctx.beginPath(); ctx.moveTo(px-nx*len/2,py-ny*len/2); ctx.lineTo(px+nx*len/2,py+ny*len/2); ctx.stroke();
+    arrw(px+nx*len/2,py+ny*len/2,nx,ny,5);
+  }
+}
+
+// ── Work demo points ──────────────────────────────────
+function drawWPts(){
+  drawWPt(ptA,'A','#e67e22'); drawWPt(ptB,'B','#8e44ad');
+  const{px:ax,py:ay}=g2p(ptA.gx,ptA.gy),{px:bx,py:by}=g2p(ptB.gx,ptB.gy);
+  ctx.save(); ctx.strokeStyle='rgba(150,150,185,.42)'; ctx.lineWidth=1.2;
+  ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+}
+function drawWPt(pt,lab,col){
+  const{px,py}=g2p(pt.gx,pt.gy),V=inEl(pt.gx,pt.gy)?null:dV(pt.gx,pt.gy);
+  ctx.save();
+  const gr=ctx.createRadialGradient(px,py,4,px,py,22);
+  gr.addColorStop(0,col+'aa'); gr.addColorStop(1,'transparent');
+  ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,22,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(px,py,10,0,Math.PI*2);
+  ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='bold 12px IBM Plex Sans,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(lab,px,py);
+  if(V!==null){
+    const vl=V.toFixed(2)+' V', tw=ctx.measureText(vl).width+12;
+    ctx.fillStyle='rgba(10,15,25,.9)'; ctx.beginPath(); ctx.roundRect(px-tw/2,py-31,tw,18,4); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='bold 11px IBM Plex Sans,sans-serif'; ctx.fillText(vl,px,py-22);
+  }
+  ctx.restore();
+}
+
+// ── Animated particle ─────────────────────────────────
+function drawParticle(){
+  const t=animT,gx=ptA.gx+t*(ptB.gx-ptA.gx),gy=ptA.gy+t*(ptB.gy-ptA.gy);
+  const{px,py}=g2p(gx,gy);
+  const W=workQ*(safeV(ptA)-safeV(ptB));
+  const gc=W>0.05?'#00ff88':W<-0.05?'#ff4455':'#aaaacc';
+  ctx.save();
+  for(let i=10;i>=0;i--){
+    const tt=Math.max(0,t-i*.025);
+    const tx=ptA.gx+tt*(ptB.gx-ptA.gx),ty=ptA.gy+tt*(ptB.gy-ptA.gy);
+    const{px:tpx,py:tpy}=g2p(tx,ty);
+    const alpha=(1-i/10)*.32;
+    ctx.beginPath(); ctx.arc(tpx,tpy,4+(10-i)*.28,0,Math.PI*2);
+    ctx.fillStyle=gc+Math.round(alpha*255).toString(16).padStart(2,'0'); ctx.fill();
+  }
+  const gr=ctx.createRadialGradient(px,py,2,px,py,20);
+  gr.addColorStop(0,gc+'cc'); gr.addColorStop(1,'transparent');
+  ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,20,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(px,py,8,0,Math.PI*2);
+  ctx.fillStyle=gc; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle=workQ>0?'#001':'#fff'; ctx.font='bold 10px IBM Plex Sans,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(workQ>0?'+':'−',px,py);
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+// UI
+// ═══════════════════════════════════════════════════════
+
+function setVM(){
+  const el=document.getElementById('vmVal');
+  if(probeOn&&!inEl(probeX,probeY)){
+    el.textContent=probeV.toFixed(2);
+    el.style.color=probeV<.5?'#6699ff':probeV>5.5?'#ff7733':'#00ff88';
+  } else {el.textContent='--.--';el.style.color='#00ff88';}
+}
+
+function setCase(n){
+  activeCase=n;
+  document.getElementById('caseHead').textContent=CFG[n].label;
+  [1,2,3].forEach(i=>document.getElementById('cb'+i).classList.toggle('on',i===n));
+  resetAnim();
+  if(mode==='teacher-work') updateWork();
+  redraw();
+}
+
+function recordPt(){
+  if(!probeOn||inEl(probeX,probeY)) return;
+  points.push({n:points.length+1,x:probeX.toFixed(1),y:probeY.toFixed(1),v:probeV.toFixed(2)});
+  renderTable();
+  const btn=document.getElementById('recBtn');
+  btn.textContent='✅ Recorded!'; btn.style.background='#00cc66';
+  setTimeout(()=>{btn.textContent='📍 Record Point';btn.style.background='';},420);
+}
+function clearPts(){points=[];renderTable();}
+function renderTable(){
+  const tb=document.getElementById('dBody'),cnt=document.getElementById('ptCnt');
+  cnt.textContent=points.length+' pt'+(points.length!==1?'s':'');
+  if(!points.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:.55rem;font-size:.79rem">No points yet</td></tr>';return;}
+  tb.innerHTML=points.map(p=>`<tr><td>${p.n}</td><td>${p.x}</td><td>${p.y}</td><td><b>${p.v}</b></td></tr>`).join('');
+  document.querySelector('.data-scroll').scrollTop=9999;
+}
+
+// ── Teacher access ─────────────────────────────────────
+document.getElementById('tModeBtn').onclick=()=>{
+  document.getElementById('loginModal').classList.add('open');
+  document.getElementById('pwIn').value='';
+  document.getElementById('pwErr').classList.add('hidden');
+  setTimeout(()=>document.getElementById('pwIn').focus(),80);
+};
+function tryLogin(){
+  if(document.getElementById('pwIn').value==='physics'){closeLogin();enterTeacher();}
+  else{document.getElementById('pwErr').classList.remove('hidden');document.getElementById('pwIn').value='';}
+}
+function closeLogin(){document.getElementById('loginModal').classList.remove('open');}
+function enterTeacher(){
+  mode='teacher-field';
+  document.getElementById('sPanel').classList.add('hidden');
+  document.getElementById('tPanel').classList.remove('hidden');
+  document.getElementById('tBanner').classList.add('on');
+  document.getElementById('tModeBtn').style.display='none';
+  setTTab('field'); redraw();
+}
+document.getElementById('exitTBtn').onclick=()=>{
+  mode='student';
+  document.getElementById('sPanel').classList.remove('hidden');
+  document.getElementById('tPanel').classList.add('hidden');
+  document.getElementById('tBanner').classList.remove('on');
+  document.getElementById('tModeBtn').style.display='';
+  resetAnim(); redraw();
+};
+function setTTab(tab){
+  const isF=tab==='field'; mode=isF?'teacher-field':'teacher-work';
+  document.getElementById('tfPanel').classList.toggle('hidden',!isF);
+  document.getElementById('twPanel').classList.toggle('hidden',isF);
+  document.getElementById('tfBtn').classList.toggle('active',isF);
+  document.getElementById('twBtn').classList.toggle('active',!isF);
+  if(!isF) updateWork(); redraw();
+}
+
+// ── Work Demo ─────────────────────────────────────────
+function updateQ(){
+  const v=+document.getElementById('qSlider').value;
+  workQ=v===0?1:v;
+  document.getElementById('qDisp').textContent=(workQ>0?'+':'')+workQ+' μC';
+  updateWork();
+}
+function updateWork(){
+  if(mode!=='teacher-work') return;
+  const Va=safeV(ptA),Vb=safeV(ptB),dv=Va-Vb,W=workQ*dv;
+  document.getElementById('vaD').textContent=Va.toFixed(2)+' V';
+  document.getElementById('vbD').textContent=Vb.toFixed(2)+' V';
+  document.getElementById('dvD').textContent=dv.toFixed(2)+' V';
+  document.getElementById('wkD').textContent=W.toFixed(2)+' μJ';
+  const res=document.getElementById('wkRes');
+  if(Math.abs(W)<.05){res.className='wk-res wk-zer';res.innerHTML='⚪ W ≈ 0 μJ — Points on same equipotential';}
+  else if(W>0){res.className='wk-res wk-pos';res.innerHTML=`🟢 W = +${W.toFixed(2)} μJ — Field does work`;}
+  else{res.className='wk-res wk-neg';res.innerHTML=`🔴 W = ${W.toFixed(2)} μJ — External work needed`;}
+  drawEBars(Va,Vb,W);
+  updateExplain(Va,Vb,W);
+}
+function updateExplain(Va,Vb,W){
+  const qS=(workQ>0?'+':'')+workQ+' μC',dv=(Va-Vb).toFixed(2);
+  let h=`<b>Moving a ${workQ>0?'positive':'negative'} charge (q = ${qS})</b> from A (${Va.toFixed(2)} V) → B (${Vb.toFixed(2)} V).<br><br>`;
+  h+=`<b>W = q·ΔV = (${qS})(${dv} V) = ${W.toFixed(2)} μJ</b><br>`;
+  h+=`<b>ΔKE = W = ${W.toFixed(2)} μJ</b><br>`;
+  h+=`<b>ΔPE = −W = ${(-W).toFixed(2)} μJ</b><br><br>`;
+  if(Math.abs(W)<.05)
+    h+='⚪ <b>No net work done.</b> A and B share the same potential. The charge travels freely — this is exactly what an equipotential surface means!';
+  else if(W>0)
+    h+=`🟢 <b>The field accelerates the charge spontaneously</b> — like a ball rolling downhill. PE converts to KE. No external push needed. The system loses ${Math.abs(W).toFixed(2)} μJ of PE and gains the same in KE.`;
+  else
+    h+=`🔴 <b>The charge needs a push.</b> Moving it from A→B is like pushing a ball uphill. An external agent must supply ${Math.abs(W).toFixed(2)} μJ of work. KE decreases (or stays constant if pushed at constant speed) and PE increases.`;
+  document.getElementById('physBox').innerHTML=h;
+}
+
+// ── Energy Bars ───────────────────────────────────────
+function drawEBars(Va,Vb,W,currFrac){
+  ecvs.width=ecvs.offsetWidth||220; ecvs.height=110;
+  const ew=ecvs.width,eh=110,d=dk();
+  ectx.fillStyle=d?'#131920':'#f4f8fd'; ectx.fillRect(0,0,ew,eh);
+  const frac=(currFrac!==undefined)?currFrac:1;
+  const KE0=4,PE0=0,KE1=KE0+W*frac,PE1=-W*frac;
+  const maxE=Math.max(Math.abs(KE0),Math.abs(KE1),Math.abs(PE0),Math.abs(PE1),1);
+  const sc=(eh*.58)/maxE,base=eh*.74,bw=ew*.13,gp=ew*.04;
+  const kCol=W>0.05?'#27ae60':W<-0.05?'#e74c3c':'#2980b9';
+  const pCol=W>0.05?'#8e44ad':W<-0.05?'#d35400':'#e67e22';
+  eBar(ew*.09,base,bw,KE0,sc,'#2980b9','KE',d);
+  eBar(ew*.09+bw+gp,base,bw,PE0,sc,'#e67e22','PE',d);
+  ectx.strokeStyle=d?'rgba(255,255,255,.08)':'rgba(0,0,0,.08)';
+  ectx.lineWidth=1; ectx.setLineDash([3,3]);
+  ectx.beginPath(); ectx.moveTo(ew*.5,4); ectx.lineTo(ew*.5,eh-4); ectx.stroke();
+  ectx.setLineDash([]);
+  eBar(ew*.56,base,bw,KE1,sc,kCol,"KE'",d);
+  eBar(ew*.56+bw+gp,base,bw,PE1,sc,pCol,"PE'",d);
+  ectx.fillStyle=d?'rgba(170,195,230,.45)':'rgba(60,85,130,.55)';
+  ectx.font='7.5px IBM Plex Sans,sans-serif'; ectx.textAlign='center';
+  ectx.fillText('BEFORE A',ew*.24,eh-2); ectx.fillText('AFTER B',ew*.72,eh-2);
+}
+function eBar(x,base,w,val,sc,col,lab,d){
+  const h=Math.max(Math.abs(val)*sc,2),y=val>=0?base-h:base;
+  ectx.fillStyle=col; ectx.beginPath(); ectx.roundRect(x,y,w,h,[3,3,0,0]); ectx.fill();
+  ectx.fillStyle=d?'#ccc':'#333'; ectx.font='7px IBM Plex Sans,sans-serif'; ectx.textAlign='center';
+  ectx.fillText(val.toFixed(1),x+w/2,val>=0?y-2:y+h+9);
+  ectx.fillStyle=d?'#aaa':'#555'; ectx.font='bold 7.5px IBM Plex Sans,sans-serif';
+  ectx.fillText(lab,x+w/2,base+12);
+}
+
+// ── Animation ─────────────────────────────────────────
+function startAnim(){
+  if(animating) return;
+  animating=true; animT=0; animStart=null;
+  const Va=safeV(ptA),Vb=safeV(ptB),W=workQ*(Va-Vb);
+  function loop(ts){
+    if(!animStart) animStart=ts;
+    const raw=Math.min(1,(ts-animStart)/ANIM_MS);
+    animT=W>0.05?raw*raw:W<-0.05?raw*(2-raw):raw;
+    const frac=(safeV(ptA)-dV(ptA.gx+animT*(ptB.gx-ptA.gx),ptA.gy+animT*(ptB.gy-ptA.gy)))/(Va-Vb||.001);
+    drawEBars(Va,Vb,W,Math.max(0,Math.min(1,frac)));
+    redraw();
+    if(raw<1) animRAF=requestAnimationFrame(loop);
+    else{animT=1;animating=false;redraw();drawEBars(Va,Vb,W,1);}
+  }
+  animRAF=requestAnimationFrame(loop);
+}
+function resetAnim(){
+  if(animRAF){cancelAnimationFrame(animRAF);animRAF=null;}
+  animating=false; animT=0; redraw();
+}
+
+// ── Theme ─────────────────────────────────────────────
+document.getElementById('themeBtn').onclick=()=>{
+  const d=dk();
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');
+  document.getElementById('themeBtn').textContent=d?'🌙 Dark':'☀️ Light';
+  redraw(); if(mode==='teacher-work') updateWork();
+};
+
+// ── Init ──────────────────────────────────────────────
+function init(){
+  [1,2,3].forEach(cn=>cal(cn));   // pre-calibrate all cases
+  new ResizeObserver(()=>{if(mode==='teacher-work')updateWork();}).observe(ecvs);
+  renderTable(); setCase(1); redraw();
+}
+init();
+</script>
+</body>
+</html>
