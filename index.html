@@ -120,8 +120,14 @@
           <div class="vm-val" id="vmVal">--.--</div>
           <div class="vm-lbl">Volts DC</div>
         </div>
-        <p class="hint" style="margin-top:.4rem;font-size:.81rem">Hover to read voltage. Click the canvas to record a point.</p>
+        <p class="hint" id="toolHint" style="margin-top:.4rem;font-size:.81rem">Hover to read voltage. Click the canvas to record a point.</p>
         <div class="button-row compact" style="margin-top:.38rem">
+          <button class="primary" id="toolProbe" onclick="setTool('probe')">📍 Probe</button>
+          <button class="ghost" id="toolDrawEq" onclick="setTool('drawEq')">✏️ Equipotential</button>
+          <button class="ghost" id="toolDrawFL" onclick="setTool('drawFL')">✏️ Field Line</button>
+        </div>
+        <div class="button-row compact" style="margin-top:.38rem">
+          <button onclick="clearDrawings()" style="flex:1">Clear Drawings</button>
           <button onclick="clearPts()" style="flex:1">Clear Data</button>
         </div>
         <div style="margin-top:.6rem">
@@ -250,6 +256,9 @@ let drag=null;
 let workQ=1;                         // μC, signed
 let points=[];
 let animating=false, animT=0, animRAF=null, animStart=null;
+let currentTool='probe';
+let drawings=[];
+let currentStroke=null;
 const ANIM_MS=2600;
 const CALIB={};
 
@@ -341,23 +350,43 @@ function cPos(e){
 }
 cvs.addEventListener('mousemove',e=>{
   const{gx,gy}=cPos(e);
-  probeX=Math.max(.1,Math.min(GW-.1,gx));
-  probeY=Math.max(.1,Math.min(GH-.1,gy));
-  probeOn=true;
-  if(drag&&mode==='teacher-work'){drag.gx=probeX;drag.gy=probeY;updateWork();}
-  if(!inEl(probeX,probeY)) probeV=dV(probeX,probeY);
+  if(currentTool==='probe'){
+    probeX=Math.max(.1,Math.min(GW-.1,gx));
+    probeY=Math.max(.1,Math.min(GH-.1,gy));
+    probeOn=true;
+    if(!inEl(probeX,probeY)) probeV=dV(probeX,probeY);
+  } else {
+    probeOn=false;
+  }
+  if(drag&&mode==='teacher-work'){drag.gx=Math.max(.1,Math.min(GW-.1,gx));drag.gy=Math.max(.1,Math.min(GH-.1,gy));updateWork();}
+  
+  if(currentStroke){
+    const r=cvs.getBoundingClientRect();
+    const px = (e.clientX-r.left)*CW/r.width;
+    const py = (e.clientY-r.top)*CH/r.height;
+    currentStroke.pts.push({px,py});
+  }
+  
   redraw(); setVM();
 });
-cvs.addEventListener('mouseleave',()=>{probeOn=false;drag=null;redraw();});
+cvs.addEventListener('mouseleave',()=>{probeOn=false;drag=null;currentStroke=null;redraw();});
 cvs.addEventListener('mousedown',e=>{
   const{gx,gy}=cPos(e);
   if(mode==='teacher-work'){
     if(Math.hypot(gx-ptA.gx,gy-ptA.gy)<1.3){drag=ptA;return;}
     if(Math.hypot(gx-ptB.gx,gy-ptB.gy)<1.3){drag=ptB;return;}
   }
-  if(mode==='student') recordPt();
+  if(currentTool==='probe'){
+    if(mode==='student') recordPt();
+  } else {
+    const r=cvs.getBoundingClientRect();
+    const px = (e.clientX-r.left)*CW/r.width;
+    const py = (e.clientY-r.top)*CH/r.height;
+    currentStroke = { type: currentTool, pts: [{px, py}] };
+    drawings.push(currentStroke);
+  }
 });
-cvs.addEventListener('mouseup',()=>{drag=null;});
+cvs.addEventListener('mouseup',()=>{drag=null;currentStroke=null;});
 cvs.addEventListener('touchmove',e=>{
   e.preventDefault();
   cvs.dispatchEvent(new MouseEvent('mousemove',{clientX:e.touches[0].clientX,clientY:e.touches[0].clientY}));
@@ -387,8 +416,41 @@ function redraw(){
   }
   drawGrid();
   drawElecs();
+  drawRecordedPts();
+  drawManLines();
   if(mode==='teacher-work'){drawWPts();if(animating||animT>0)drawParticle();}
   if(probeOn&&!inEl(probeX,probeY)) drawProbe();
+}
+
+function drawRecordedPts(){
+  ctx.save();
+  for(const pt of points){
+    const {px,py} = g2p(pt.x, pt.y);
+    const col=vCol(pt.v/6);
+    ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle=dk()?'#eef2f9':'#123140';
+    ctx.font='10px IBM Plex Sans,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(pt.v+'V', px, py-8);
+  }
+  ctx.restore();
+}
+
+function drawManLines() {
+   ctx.save();
+   const d = dk();
+   for(const stroke of drawings){
+      ctx.beginPath();
+      for(let i=0; i<stroke.pts.length; i++){
+         const pt = stroke.pts[i];
+         if(i===0) ctx.moveTo(pt.px, pt.py);
+         else ctx.lineTo(pt.px, pt.py);
+      }
+      ctx.strokeStyle = stroke.type === 'drawEq' ? (d ? '#2ecc71' : '#27ae60') : (d ? '#3498db' : '#2980b9');
+      ctx.lineWidth = 3;
+      ctx.stroke();
+   }
+   ctx.restore();
 }
 
 function drawBg(){
@@ -646,6 +708,18 @@ function drawParticle(){
 // UI
 // ═══════════════════════════════════════════════════════
 
+function setTool(t){
+  currentTool = t;
+  document.getElementById('toolProbe').className = (t==='probe') ? 'primary' : 'ghost';
+  document.getElementById('toolDrawEq').className = (t==='drawEq') ? 'primary' : 'ghost';
+  document.getElementById('toolDrawFL').className = (t==='drawFL') ? 'primary' : 'ghost';
+  const hint = document.getElementById('toolHint');
+  if(t==='probe') hint.innerHTML = 'Hover to read voltage. Click the canvas to record a point.';
+  else if(t==='drawEq') hint.innerHTML = 'Click and drag on the canvas to manually draw an equipotential line.';
+  else if(t==='drawFL') hint.innerHTML = 'Click and drag on the canvas to manually draw a field line.';
+}
+function clearDrawings(){ drawings=[]; redraw(); }
+
 function setVM(){
   const el=document.getElementById('vmVal');
   if(probeOn&&!inEl(probeX,probeY)){
@@ -746,11 +820,11 @@ function updateExplain(Va,Vb,W){
   h+=`<b>ΔKE = W<sub>field</sub> = ${W.toFixed(2)} μJ</b><br>`;
   h+=`<b>ΔPE = −W<sub>field</sub> = ${(-W).toFixed(2)} μJ</b><br><br>`;
   if(Math.abs(W)<.05)
-    h+='<b>No net work done.</b> A and B share the same potential. The charge travels freely on an equipotential path.';
+    h+='⚪ <b>No net work done.</b> A and B share the same potential. The charge travels freely — this is exactly what an equipotential surface means!';
   else if(W>0)
-    h+=`<b>The field accelerates the charge spontaneously</b> — like a rolling ball downhill. PE converts to KE. No external push needed. The system loses ${Math.abs(W).toFixed(2)} μJ of PE and gains the same in KE.`;
+    h+=`🟢 <b>The field accelerates the charge spontaneously</b> — like a ball rolling downhill. PE converts to KE. No external push needed. The system loses ${Math.abs(W).toFixed(2)} μJ of PE and gains the same in KE.`;
   else
-    h+=`<b>The charge needs a push.</b> Moving it from A→B is like pushing a ball uphill. An external agent must supply ${Math.abs(W).toFixed(2)} μJ of work. KE decreases (or stays constant if pushed at constant speed) and PE increases.`;
+    h+=`🔴 <b>The charge needs a push.</b> Moving it from A→B is like pushing a ball uphill. An external agent must supply ${Math.abs(W).toFixed(2)} μJ of work. KE decreases (or stays constant if pushed at constant speed) and PE increases.`;
   document.getElementById('physBox').innerHTML=h;
 }
 
