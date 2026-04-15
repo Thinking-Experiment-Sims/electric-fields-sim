@@ -110,6 +110,20 @@
     <!-- === Controls panel === -->
     <div class="panel narrow" id="ctrlPanel">
 
+      <!-- COMMON TOOLS -->
+      <div id="commonTools" style="margin-bottom:.6rem; padding-bottom:.6rem; border-bottom:1px solid var(--border)">
+        <p class="hint" id="toolHint" style="font-size:.81rem; margin-top:0; margin-bottom:.4rem;">Hover to read voltage. Click the canvas to record a point.</p>
+        <div class="button-row compact">
+          <button class="primary" id="toolProbe" onclick="setTool('probe')">📍 Probe / Record</button>
+          <button class="ghost" id="toolDrawEq" onclick="setTool('drawEq')">✏️ Equipotential</button>
+          <button class="ghost" id="toolDrawFL" onclick="setTool('drawFL')">✏️ Field Line</button>
+        </div>
+        <div class="button-row compact" style="margin-top:.38rem">
+          <button onclick="clearDrawings()" style="flex:1">🧽 Clear Drawings</button>
+          <button onclick="clearPts()" style="flex:1">🗑️ Clear Data Points</button>
+        </div>
+      </div>
+
       <!-- STUDENT panel -->
       <div id="sPanel">
         <div class="panel-head" style="margin-bottom:.5rem">
@@ -119,16 +133,6 @@
         <div class="vm-wrap">
           <div class="vm-val" id="vmVal">--.--</div>
           <div class="vm-lbl">Volts DC</div>
-        </div>
-        <p class="hint" id="toolHint" style="margin-top:.4rem;font-size:.81rem">Hover to read voltage. Click the canvas to record a point.</p>
-        <div class="button-row compact" style="margin-top:.38rem">
-          <button class="primary" id="toolProbe" onclick="setTool('probe')">📍 Probe</button>
-          <button class="ghost" id="toolDrawEq" onclick="setTool('drawEq')">✏️ Equipotential</button>
-          <button class="ghost" id="toolDrawFL" onclick="setTool('drawFL')">✏️ Field Line</button>
-        </div>
-        <div class="button-row compact" style="margin-top:.38rem">
-          <button onclick="clearDrawings()" style="flex:1">Clear Drawings</button>
-          <button onclick="clearPts()" style="flex:1">Clear Data</button>
         </div>
         <div style="margin-top:.6rem">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.22rem">
@@ -377,7 +381,7 @@ cvs.addEventListener('mousedown',e=>{
     if(Math.hypot(gx-ptB.gx,gy-ptB.gy)<1.3){drag=ptB;return;}
   }
   if(currentTool==='probe'){
-    if(mode==='student') recordPt();
+    recordPt();
   } else {
     const r=cvs.getBoundingClientRect();
     const px = (e.clientX-r.left)*CW/r.width;
