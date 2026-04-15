@@ -84,6 +84,13 @@ button.ghost { background: transparent; border-color: transparent; }
 button.ghost:hover { background: rgba(0,0,0,.05); }
 .button-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .button-row.compact { gap: 0.4rem; }
+button.ghost { background: #eef8fb; border-color: #9dbac5; }
+[data-theme="dark"] button.ghost { background: rgba(200,162,74,0.1); border-color:rgba(229,204,143,0.28); }
+button:hover:not(:disabled) { transform: translateY(-1px); opacity:.92; }
+button:disabled { opacity:.5; cursor:not-allowed; }
+.status { background:rgba(15,126,155,.06); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.55rem .7rem; font-size:.83rem; color:var(--muted); }
+input[type="text"], input[type="number"], input[type="password"] { font:inherit; border:1px solid #a9c4cf; border-radius:var(--radius-sm); background:#f9fdff; color:var(--ink); padding:.46rem .56rem; width:100%; }
+[data-theme="dark"] input[type="text"],[data-theme="dark"] input[type="number"],[data-theme="dark"] input[type="password"] { background:#1e2430; color:#eef2f9; border-color:rgba(229,204,143,.24); }
 
 /* ── Sim-specific ──────────────────────────────────────────── */
 
@@ -104,8 +111,11 @@ button.ghost:hover { background: rgba(0,0,0,.05); }
 .t-banner.on { display:flex; }
 .t-banner button { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.3); padding:.2rem .55rem; font-size:.78rem; }
 
-.t-tabs { display:flex; gap:.3rem; margin-bottom:.55rem; }
-.t-tabs .tab-btn { flex:1; font-size:.8rem; padding:.38rem .2rem; }
+.t-tabs { display:flex; gap:.3rem; margin-bottom:.7rem; }
+.t-tabs .tab-btn { flex:1; font-size:.82rem; padding:.45rem .2rem; border-radius:var(--radius-sm); background:#edf7fb; border-color:var(--border); }
+.t-tabs .tab-btn.active { background:linear-gradient(160deg,#0d839f,#0b5f77); color:#fff; border-color:#0a5d74; }
+[data-theme="dark"] .t-tabs .tab-btn { background:#1e2430; }
+[data-theme="dark"] .t-tabs .tab-btn.active { background:linear-gradient(160deg,#d8b767,#c8a24a); color:#241a08; border-color:#b88f35; }
 
 .rm { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.32rem .48rem; font-size:.76rem; color:var(--muted); }
 .rm .v { font-size:.93rem; font-weight:700; color:var(--ink); display:block; margin-top:.08rem; }
