@@ -120,10 +120,9 @@
           <div class="vm-val" id="vmVal">--.--</div>
           <div class="vm-lbl">Volts DC</div>
         </div>
-        <p class="hint" style="margin-top:.4rem;font-size:.81rem">Hover to read voltage. Click to record a point.</p>
+        <p class="hint" style="margin-top:.4rem;font-size:.81rem">Hover to read voltage. Click the canvas to record a point.</p>
         <div class="button-row compact" style="margin-top:.38rem">
-          <button class="primary" id="recBtn" onclick="recordPt()" style="flex:2">📍 Record Point</button>
-          <button onclick="clearPts()">🗑 Clear</button>
+          <button onclick="clearPts()" style="flex:1">Clear Data</button>
         </div>
         <div style="margin-top:.6rem">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.22rem">
@@ -152,8 +151,8 @@
       <!-- TEACHER panel -->
       <div id="tPanel" class="hidden">
         <div class="t-tabs">
-          <button class="tab-btn active" id="tfBtn" onclick="setTTab('field')">📊 Field View</button>
-          <button class="tab-btn"        id="twBtn" onclick="setTTab('work')">⚡ Work Demo</button>
+          <button class="tab-btn active" id="tfBtn" onclick="setTTab('field')">Field View</button>
+          <button class="tab-btn"        id="twBtn" onclick="setTTab('work')">Work Demo</button>
         </div>
 
         <!-- Field Visualizer -->
@@ -163,10 +162,10 @@
             <h2 style="font-size:1rem">Field Visualizer</h2>
           </div>
           <div class="toggle-group" style="margin-top:.15rem">
-            <label class="toggle-line"><input type="checkbox" id="chkEq"  checked onchange="redraw()"> 🌈 Equipotential Lines</label>
-            <label class="toggle-line"><input type="checkbox" id="chkFL"  checked onchange="redraw()"> ➡️ Field Lines</label>
-            <label class="toggle-line"><input type="checkbox" id="chkArr"        onchange="redraw()"> 🏹 Field Arrow Grid</label>
-            <label class="toggle-line"><input type="checkbox" id="chkHt"         onchange="redraw()"> 🎨 Voltage Heatmap</label>
+            <label class="toggle-line"><input type="checkbox" id="chkEq"  checked onchange="redraw()"> Equipotential Lines</label>
+            <label class="toggle-line"><input type="checkbox" id="chkFL"  checked onchange="redraw()"> Field Lines</label>
+            <label class="toggle-line"><input type="checkbox" id="chkArr"        onchange="redraw()"> Field Arrow Grid</label>
+            <label class="toggle-line"><input type="checkbox" id="chkHt"         onchange="redraw()"> Voltage Heatmap</label>
           </div>
           <div class="status" style="margin-top:.55rem;font-size:.81rem">
             💡 Probe still active — hover to read voltage and guide students through the map.
@@ -183,8 +182,8 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.32rem;margin:.4rem 0">
             <div class="rm"><span><span class="bdg bdg-a">A</span> V<sub>A</sub></span><span class="v" id="vaD">-- V</span></div>
             <div class="rm"><span><span class="bdg bdg-b">B</span> V<sub>B</sub></span><span class="v" id="vbD">-- V</span></div>
-            <div class="rm"><span>ΔV = V<sub>A</sub>−V<sub>B</sub></span><span class="v" id="dvD">--</span></div>
-            <div class="rm"><span>W = q·ΔV</span><span class="v" id="wkD">--</span></div>
+            <div class="rm"><span>ΔV = V<sub>B</sub>−V<sub>A</sub></span><span class="v" id="dvD">--</span></div>
+            <div class="rm"><span>W<sub>field</sub> = −q·ΔV</span><span class="v" id="wkD">--</span></div>
           </div>
           <label style="margin-top:.3rem;font-size:.83rem">
             Charge q: <span id="qDisp" style="font-weight:700;color:var(--accent)">+1 μC</span>
@@ -200,9 +199,10 @@
           <details style="margin-top:.48rem">
             <summary>Key Equations</summary>
             <div style="margin-top:.32rem;font-size:.8rem;line-height:1.78;color:var(--muted)">
-              <b style="color:var(--ink)">W = q·ΔV = q·(V<sub>A</sub>−V<sub>B</sub>)</b><br>Work by field on charge q moving A→B<br>
-              <b style="color:var(--ink)">ΔKE = W</b> (Work-Energy Theorem)<br>
-              <b style="color:var(--ink)">ΔPE = −W</b> (Conservative field)<br>
+              <b style="color:var(--ink)">ΔV = V<sub>B</sub> − V<sub>A</sub></b><br>
+              <b style="color:var(--ink)">W<sub>field</sub> = −q·ΔV</b><br>Work done by field on charge q moving A→B<br>
+              <b style="color:var(--ink)">ΔKE = W<sub>field</sub></b> (Work-Energy Theorem)<br>
+              <b style="color:var(--ink)">ΔPE = −W<sub>field</sub></b> (Conservative field)<br>
               <hr style="border-color:var(--border);margin:.35rem 0">
               <span style="color:#1a7f4e">W &gt; 0 → spontaneous (field pushes)</span><br>
               <span style="color:#c0392b">W &lt; 0 → needs external work (push)</span><br>
@@ -237,8 +237,8 @@
 // ═══════════════════════════════════════════════════════
 
 // ── Constants ────────────────────────────────────────
-const GW=28, GH=22, PX=30;          // grid units, px/unit
-const CW=GW*PX, CH=GH*PX;           // canvas pixels (840×660)
+const GW=28, GH=28, PX=24;          // grid units, px/unit
+const CW=GW*PX, CH=GH*PX;           // canvas pixels (672x672)
 
 // ── State ─────────────────────────────────────────────
 let mode='student';                  // student | teacher-field | teacher-work
@@ -271,14 +271,14 @@ function barQ(x1,cy,x2,Q,n=20){
 // ── Configs ──────────────────────────────────────────
 const CFG={
   1:{label:'Case I — Two Circular Electrodes',
-     pos:{type:'circle',cx:7, cy:6, r:2.5,charges:[{x:7, y:6, q:1}],  calX:7, calY:8.55},
-     neg:{type:'circle',cx:7, cy:16,r:2.5,charges:[{x:7, y:16,q:-1}], calX:7, calY:13.45}},
+     pos:{type:'circle',cx:14, cy:7, r:1,charges:[{x:14, y:7, q:1}],  calX:14, calY:8.01},
+     neg:{type:'circle',cx:14, cy:21,r:1,charges:[{x:14, y:21,q:-1}], calX:14, calY:19.99}},
   2:{label:'Case II — Parallel Plate Electrodes',
-     pos:{type:'bar',x1:7, y1:4, x2:21,y2:6, cy:5, charges:barQ(7,5,21,1,20),  calX:14,calY:6.15},
-     neg:{type:'bar',x1:7, y1:16,x2:21,y2:18,cy:17,charges:barQ(7,17,21,-1,20),calX:14,calY:15.85}},
+     pos:{type:'bar',x1:7, y1:6.5, x2:21,y2:7.5, cy:7, charges:barQ(7,7,21,1,25),  calX:14,calY:7.51},
+     neg:{type:'bar',x1:7, y1:20.5,x2:21,y2:21.5,cy:21,charges:barQ(7,21,21,-1,25),calX:14,calY:20.49}},
   3:{label:'Case III — Circle and Bar',
-     pos:{type:'circle',cx:10,cy:6, r:2.5,charges:[{x:10,y:6,q:1}],  calX:10,calY:8.55},
-     neg:{type:'bar',x1:12,y1:16,x2:22,y2:18,cy:17,charges:barQ(12,17,22,-1,15),calX:17,calY:15.85}}
+     pos:{type:'circle',cx:14,cy:7, r:1,charges:[{x:14,y:7,q:1}],  calX:14,calY:8.01},
+     neg:{type:'bar',x1:7,y1:20.5,x2:21,y2:21.5,cy:21,charges:barQ(7,21,21,-1,25),calX:14,calY:20.49}}
 };
 
 // ── Physics ──────────────────────────────────────────
@@ -667,9 +667,9 @@ function recordPt(){
   if(!probeOn||inEl(probeX,probeY)) return;
   points.push({n:points.length+1,x:probeX.toFixed(1),y:probeY.toFixed(1),v:probeV.toFixed(2)});
   renderTable();
-  const btn=document.getElementById('recBtn');
-  btn.textContent='✅ Recorded!'; btn.style.background='#00cc66';
-  setTimeout(()=>{btn.textContent='📍 Record Point';btn.style.background='';},420);
+  const cvs=document.getElementById('fieldCanvas');
+  cvs.style.borderColor='#00ff88'; cvs.style.boxShadow='0 0 12px rgba(0,255,136,0.6)';
+  setTimeout(()=>{cvs.style.borderColor='';cvs.style.boxShadow='';},420);
 }
 function clearPts(){points=[];renderTable();}
 function renderTable(){
@@ -726,30 +726,31 @@ function updateQ(){
 }
 function updateWork(){
   if(mode!=='teacher-work') return;
-  const Va=safeV(ptA),Vb=safeV(ptB),dv=Va-Vb,W=workQ*dv;
+  const Va=safeV(ptA),Vb=safeV(ptB),dv=Vb-Va,W=-workQ*dv;
   document.getElementById('vaD').textContent=Va.toFixed(2)+' V';
   document.getElementById('vbD').textContent=Vb.toFixed(2)+' V';
   document.getElementById('dvD').textContent=dv.toFixed(2)+' V';
   document.getElementById('wkD').textContent=W.toFixed(2)+' μJ';
   const res=document.getElementById('wkRes');
-  if(Math.abs(W)<.05){res.className='wk-res wk-zer';res.innerHTML='⚪ W ≈ 0 μJ — Points on same equipotential';}
-  else if(W>0){res.className='wk-res wk-pos';res.innerHTML=`🟢 W = +${W.toFixed(2)} μJ — Field does work`;}
-  else{res.className='wk-res wk-neg';res.innerHTML=`🔴 W = ${W.toFixed(2)} μJ — External work needed`;}
+  if(Math.abs(W)<.05){res.className='wk-res wk-zer';res.innerHTML='W ≈ 0 μJ — Points on same equipotential';}
+  else if(W>0){res.className='wk-res wk-pos';res.innerHTML=`W = +${W.toFixed(2)} μJ — Field does work`;}
+  else{res.className='wk-res wk-neg';res.innerHTML=`W = ${W.toFixed(2)} μJ — External work needed`;}
   drawEBars(Va,Vb,W);
   updateExplain(Va,Vb,W);
 }
 function updateExplain(Va,Vb,W){
-  const qS=(workQ>0?'+':'')+workQ+' μC',dv=(Va-Vb).toFixed(2);
+  const qS=(workQ>0?'+':'')+workQ+' μC',dv=(Vb-Va).toFixed(2);
   let h=`<b>Moving a ${workQ>0?'positive':'negative'} charge (q = ${qS})</b> from A (${Va.toFixed(2)} V) → B (${Vb.toFixed(2)} V).<br><br>`;
-  h+=`<b>W = q·ΔV = (${qS})(${dv} V) = ${W.toFixed(2)} μJ</b><br>`;
-  h+=`<b>ΔKE = W = ${W.toFixed(2)} μJ</b><br>`;
-  h+=`<b>ΔPE = −W = ${(-W).toFixed(2)} μJ</b><br><br>`;
+  h+=`<b>ΔV = V<sub>B</sub> − V<sub>A</sub> = ${dv} V</b><br>`;
+  h+=`<b>W<sub>field</sub> = −q·ΔV = −(${qS})(${dv} V) = ${W.toFixed(2)} μJ</b><br>`;
+  h+=`<b>ΔKE = W<sub>field</sub> = ${W.toFixed(2)} μJ</b><br>`;
+  h+=`<b>ΔPE = −W<sub>field</sub> = ${(-W).toFixed(2)} μJ</b><br><br>`;
   if(Math.abs(W)<.05)
-    h+='⚪ <b>No net work done.</b> A and B share the same potential. The charge travels freely — this is exactly what an equipotential surface means!';
+    h+='<b>No net work done.</b> A and B share the same potential. The charge travels freely on an equipotential path.';
   else if(W>0)
-    h+=`🟢 <b>The field accelerates the charge spontaneously</b> — like a ball rolling downhill. PE converts to KE. No external push needed. The system loses ${Math.abs(W).toFixed(2)} μJ of PE and gains the same in KE.`;
+    h+=`<b>The field accelerates the charge spontaneously</b> — like a rolling ball downhill. PE converts to KE. No external push needed. The system loses ${Math.abs(W).toFixed(2)} μJ of PE and gains the same in KE.`;
   else
-    h+=`🔴 <b>The charge needs a push.</b> Moving it from A→B is like pushing a ball uphill. An external agent must supply ${Math.abs(W).toFixed(2)} μJ of work. KE decreases (or stays constant if pushed at constant speed) and PE increases.`;
+    h+=`<b>The charge needs a push.</b> Moving it from A→B is like pushing a ball uphill. An external agent must supply ${Math.abs(W).toFixed(2)} μJ of work. KE decreases (or stays constant if pushed at constant speed) and PE increases.`;
   document.getElementById('physBox').innerHTML=h;
 }
 
@@ -789,7 +790,7 @@ function eBar(x,base,w,val,sc,col,lab,d){
 function startAnim(){
   if(animating) return;
   animating=true; animT=0; animStart=null;
-  const Va=safeV(ptA),Vb=safeV(ptB),W=workQ*(Va-Vb);
+  const Va=safeV(ptA),Vb=safeV(ptB),W=-workQ*(Vb-Va);
   function loop(ts){
     if(!animStart) animStart=ts;
     const raw=Math.min(1,(ts-animStart)/ANIM_MS);
