@@ -356,7 +356,7 @@ function cPos(e){
 }
 cvs.addEventListener('mousemove',e=>{
   const{gx,gy}=cPos(e);
-  if(currentTool==='probe'){
+  if(currentTool==='probe'||currentTool==='autoEq'){
     probeX=Math.max(.1,Math.min(GW-.1,gx));
     probeY=Math.max(.1,Math.min(GH-.1,gy));
     probeOn=true;
