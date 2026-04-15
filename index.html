@@ -809,7 +809,9 @@ function downloadImage(){
   const a=document.createElement('a');
   a.href=cvs.toDataURL('image/png');
   a.download=`electric-fields-${CFG[activeCase].label.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.png`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 }
 
 function setVM(){
