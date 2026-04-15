@@ -115,8 +115,9 @@
         <p class="hint" id="toolHint" style="font-size:.81rem; margin-top:0; margin-bottom:.4rem;">Hover to read voltage. Click the canvas to record a point.</p>
         <div class="button-row compact">
           <button class="primary" id="toolProbe" onclick="setTool('probe')">📍 Probe / Record</button>
-          <button class="ghost" id="toolDrawEq" onclick="setTool('drawEq')">✏️ Equipotential</button>
-          <button class="ghost" id="toolDrawFL" onclick="setTool('drawFL')">✏️ Field Line</button>
+          <button class="ghost" id="toolAutoEq" onclick="setTool('autoEq')">✨ Auto-Eq Line</button>
+          <button class="ghost" id="toolDrawEq" onclick="setTool('drawEq')">✏️ Draw Eq Line</button>
+          <button class="ghost" id="toolDrawFL" onclick="setTool('drawFL')">✏️ Draw Field</button>
         </div>
         <div class="button-row compact" style="margin-top:.38rem">
           <button onclick="clearDrawings()" style="flex:1">🧽 Clear Drawings</button>
@@ -262,6 +263,7 @@ let points=[];
 let animating=false, animT=0, animRAF=null, animStart=null;
 let currentTool='probe';
 let drawings=[];
+let customEqs=[];
 let currentStroke=null;
 const ANIM_MS=2600;
 const CALIB={};
@@ -382,6 +384,11 @@ cvs.addEventListener('mousedown',e=>{
   }
   if(currentTool==='probe'){
     recordPt();
+  } else if(currentTool==='autoEq'){
+    if(probeOn && !inEl(probeX, probeY)){
+       customEqs.push({v:probeV, gx:probeX, gy:probeY});
+       redraw();
+    }
   } else {
     const r=cvs.getBoundingClientRect();
     const px = (e.clientX-r.left)*CW/r.width;
@@ -422,6 +429,7 @@ function redraw(){
   drawElecs();
   drawRecordedPts();
   drawManLines();
+  if(customEqs.length) drawCustomEqs();
   if(mode==='teacher-work'){drawWPts();if(animating||animT>0)drawParticle();}
   if(probeOn&&!inEl(probeX,probeY)) drawProbe();
 }
@@ -558,14 +566,42 @@ function drawHeat(){
 }
 
 // ── Equipotentials (Marching Squares) ─────────────────
-function drawEquip(){
+let eqCache={case:0, vg:null};
+function getVG(){
+  if(eqCache.case===activeCase) return eqCache.vg;
   const RX=84, RY=Math.round(84*GH/GW);
   const vg=new Float32Array(RX*RY);
   for(let j=0;j<RY;j++) for(let i=0;i<RX;i++){
     const gx=(i/(RX-1))*GW, gy=(j/(RY-1))*GH;
     vg[j*RX+i]=inEl(gx,gy)?NaN:dV(gx,gy);
   }
-  for(const lv of[1,2,3,4,5]){
+  eqCache={case:activeCase, vg};
+  return vg;
+}
+
+function drawEquip(){
+  drawEquipLevels([1,2,3,4,5], true);
+}
+
+function drawCustomEqs(){
+  drawEquipLevels(customEqs.map(c=>c.v), false);
+  ctx.save();
+  for(const c of customEqs){
+    const {px,py}=g2p(c.gx,c.gy);
+    const col=vCol(c.v/6);
+    const lab=c.v.toFixed(2)+' V', tw=ctx.measureText(lab).width+10;
+    ctx.fillStyle='rgba(255,255,255,.92)'; ctx.strokeStyle=col; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.roundRect(px-tw/2,py-9,tw,18,4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=col; ctx.font='bold 11px IBM Plex Sans,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(lab,px,py);
+  }
+  ctx.restore();
+}
+
+function drawEquipLevels(levels, isStd){
+  const vg=getVG();
+  const RX=84, RY=Math.round(84*GH/GW);
+  for(const lv of levels){
     ctx.strokeStyle=vCol(lv/6); ctx.lineWidth=2.2; ctx.beginPath();
     for(let j=0;j<RY-1;j++) for(let i=0;i<RX-1;i++){
       const v00=vg[j*RX+i],v10=vg[j*RX+i+1],v01=vg[(j+1)*RX+i],v11=vg[(j+1)*RX+i+1];
@@ -583,7 +619,7 @@ function drawEquip(){
       if(pts.length===4){ctx.moveTo(pts[2].x,pts[2].y);ctx.lineTo(pts[3].x,pts[3].y);}
     }
     ctx.stroke();
-    eqLabel(lv);
+    if(isStd) eqLabel(lv);
   }
 }
 function eqLabel(lv){
@@ -715,14 +751,16 @@ function drawParticle(){
 function setTool(t){
   currentTool = t;
   document.getElementById('toolProbe').className = (t==='probe') ? 'primary' : 'ghost';
+  document.getElementById('toolAutoEq').className = (t==='autoEq') ? 'primary' : 'ghost';
   document.getElementById('toolDrawEq').className = (t==='drawEq') ? 'primary' : 'ghost';
   document.getElementById('toolDrawFL').className = (t==='drawFL') ? 'primary' : 'ghost';
   const hint = document.getElementById('toolHint');
   if(t==='probe') hint.innerHTML = 'Hover to read voltage. Click the canvas to record a point.';
+  else if(t==='autoEq') hint.innerHTML = 'Click anywhere to instantly trace the equipotential line for that exact voltage.';
   else if(t==='drawEq') hint.innerHTML = 'Click and drag on the canvas to manually draw an equipotential line.';
   else if(t==='drawFL') hint.innerHTML = 'Click and drag on the canvas to manually draw a field line.';
 }
-function clearDrawings(){ drawings=[]; redraw(); }
+function clearDrawings(){ drawings=[]; customEqs=[]; redraw(); }
 
 function setVM(){
   const el=document.getElementById('vmVal');
