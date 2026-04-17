@@ -347,39 +347,29 @@ footer {
             <div class="rm"><span>W<sub>field</sub> = −q·ΔV</span><span class="v" id="wkD">--</span></div>
             <div class="rm"><span>v<sub>final</sub></span><span class="v" id="vfD">-- m/s</span></div>
           </div>
-          <div style="background:#f9f9f9; padding:.7rem; border-radius:10px; border:1px solid var(--border); margin-bottom:.5rem;">
-            <label style="font-size:.83rem">
-              Charge q: <span id="qDisp" style="font-weight:700;color:var(--gold-500)">+1 μC</span>
-              <input type="range" id="qSlider" min="-10" max="10" step="1" value="1" oninput="updateWorkPhysics()">
-            </label>
-            <label style="margin-top:.4rem;font-size:.83rem">
-              Mass m: <span id="mDisp" style="font-weight:700;color:var(--gold-500)">1.0 kg</span>
-              <input type="range" id="mSlider" min="0.1" max="10" step="0.1" value="1" oninput="updateWorkPhysics()">
-            </label>
-            <label style="margin-top:.4rem;font-size:.83rem">
-              Inital v₀: <span id="v0Disp" style="font-weight:700;color:var(--gold-500)">0 m/s</span>
-              <input type="range" id="v0Slider" min="0" max="10" step="0.5" value="0" oninput="updateWorkPhysics()">
-            </label>
+          <div style="background:#f9f9f9; padding:.6rem; border-radius:10px; border:1px solid var(--border); margin-bottom:.4rem;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:.5rem;">
+               <label style="font-size:.8rem">
+                 Charge: <span id="qDisp" style="font-weight:700;color:var(--gold-500)">+1 μC</span>
+                 <input type="range" id="qSlider" min="-10" max="10" step="1" value="1" oninput="updateWorkPhysics()">
+               </label>
+               <label style="font-size:.8rem">
+                 Mass: <span id="mDisp" style="font-weight:700;color:var(--gold-500)">1.0 kg</span>
+                 <input type="range" id="mSlider" min="0.1" max="10" step="0.1" value="1" oninput="updateWorkPhysics()">
+               </label>
+               <label style="font-size:.8rem; grid-column:span 2; margin-top:-.2rem">
+                 Init v₀: <span id="v0Disp" style="font-weight:700;color:var(--gold-500)">0 m/s</span>
+                 <input type="range" id="v0Slider" min="0" max="10" step="0.5" value="0" oninput="updateWorkPhysics()">
+               </label>
+            </div>
           </div>
-          <div id="wkEx" style="font-size: .83rem; line-height: 1.6; margin-top: .6rem; padding: .6rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;"></div>
-          <div class="button-row compact" style="margin-top:.38rem">
+          <div id="wkRes" class="wk-res wk-zer" style="margin-bottom:.4rem">Set A and B on the field</div>
+          <div class="button-row compact" style="margin-bottom:.4rem">
             <button id="animBtn" onclick="startAnim()">▶ Animate</button>
             <button onclick="resetAnim()">↩ Reset</button>
           </div>
+          <div id="wkEx" style="font-size: .83rem; line-height: 1.6; padding: .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;"></div>
           <canvas id="energyCanvas" height="110" style="margin-top:.48rem"></canvas>
-          <div class="phys-box" id="physBox">Place A and B on the field to begin.</div>
-          <details style="margin-top:.48rem">
-            <summary>Key Equations</summary>
-            <div style="margin-top:.32rem;font-size:.8rem;line-height:1.78;color:var(--text-300)">
-              <b style="color:var(--text-100)">ΔV = V<sub>B</sub> − V<sub>A</sub></b><br>
-              <b style="color:var(--text-100)">W<sub>field</sub> = −q·ΔV</b><br>Work done by field on charge q moving A→B<br>
-              <b style="color:var(--text-100)">ΔKE = W<sub>field</sub></b> (Work-Energy Theorem)<br>
-              <b style="color:var(--text-100)">ΔPE = −W<sub>field</sub></b> (Conservative field)<br>
-              <hr style="border-color:var(--border);margin:.35rem 0">
-              <span style="color:#1a7f4e">W &gt; 0 → spontaneous (field pushes)</span><br>
-              <span style="color:#c0392b">W &lt; 0 → needs external work (push)</span><br>
-              <span>W = 0 → equipotential path, no energy change</span>
-          </details>
         </div><!-- /twPanel -->
       </div><!-- /unifiedPanel -->
 
@@ -724,6 +714,11 @@ function updateWorkPhysics(){
      vfEl.textContent = vf.toFixed(2) + " m/s"; vfEl.style.color = "";
   }
   
+  const res = document.getElementById('wkRes');
+  if(Math.abs(Work)<.05){res.className='wk-res wk-zer';res.innerHTML='W ≈ 0 μJ — Equipotential path no net work';}
+  else if(Work>0){res.className='wk-res wk-pos';res.innerHTML=`W = +${Work.toFixed(2)} μJ — 💨 Field does work (spontaneous)`;}
+  else{res.className='wk-res wk-neg';res.innerHTML=`W = ${Work.toFixed(2)} μJ — ✋ External work needed (push)`;}
+  
   const ex = document.getElementById('wkEx');
   const qStr = (workQ>0?'+':'')+workQ+' μC';
   let WStr = Work.toFixed(2);
@@ -996,6 +991,15 @@ function drawAnimatedTrajectory(){
   ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
   ctx.fillStyle='#fff'; ctx.font='bold 10px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText(workQ>0?'+':'−', px, py);
+  
+  const Va = safeV(ptA), Vb = dV(ptB.gx, ptB.gy);
+  const Work = -workQ * (Vb - Va);
+  if (Math.abs(Work) > 0.05) {
+      ctx.font='15px Inter';
+      const dx=ptB.gx-ptA.gx, dy=ptB.gy-ptA.gy, dist=Math.hypot(dx,dy) || 0.001;
+      const emoji = Work < 0 ? '✋' : '💨';
+      ctx.fillText(emoji, px - 18*(dx/dist), py - 18*(dy/dist));
+  }
 }
 
 // ── Helpers & UI ──────────────────────────────────────
