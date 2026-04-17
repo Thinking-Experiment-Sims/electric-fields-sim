@@ -279,6 +279,7 @@ footer {
           <button onclick="addFree('pos')">+ Positive Charge</button>
           <button onclick="addFree('neg')">− Negative Charge</button>
           <button class="ghost" onclick="addFree('plate')">+ Plate</button>
+          <button class="ghost" onclick="freeElectrodes=[]; selectedFree=null; document.getElementById('editTools').classList.add('hidden'); redraw()" style="border-color:#cc2222; color:#cc2222">Clear Field</button>
         </div>
         <div id="freeControls" style="margin-top:.8rem; padding-top:.8rem; border-top:1px solid var(--border)">
            <div class="status" id="freeStatus">Click an electrode to select and edit it.</div>
@@ -487,9 +488,14 @@ function getCalib(){
 function dV(gx,gy){
   const list = getElectrodes();
   if(!list.length) return 0;
+  
+  if (activeCase === 4) {
+      return rawV(gx, gy, list) * 4;
+  }
+  
   const {Vp, Vn} = getCalib();
-  const vPosTarget = +document.getElementById('vPosIn').value;
-  const vNegTarget = +document.getElementById('vNegIn').value;
+  const vPosTarget = document.getElementById('vPosIn') ? +document.getElementById('vPosIn').value : 6;
+  const vNegTarget = document.getElementById('vNegIn') ? +document.getElementById('vNegIn').value : 0;
   const range = vPosTarget - vNegTarget;
   if(Math.abs(Vp-Vn)<0.001) return vNegTarget;
   return vNegTarget + range * (rawV(gx,gy,list)-Vn)/(Vp-Vn);
@@ -515,18 +521,15 @@ function traceTrajectory(start, targetQ, mass, v0Dir){
   const path = [{gx:start.gx, gy:start.gy}];
   let cx=start.gx, cy=start.gy;
   let vx=0, vy=0;
-  // Initial velocity if set (towards B)
   if(v0Dir){
      const ang = Math.atan2(ptB.gy-ptA.gy, ptB.gx-ptA.gx);
      vx = Math.cos(ang) * workV0;
      vy = Math.sin(ang) * workV0;
   }
-  
   const dt = 0.15;
   for(let i=0; i<180; i++){
      const {Ex, Ey} = eF(cx, cy);
-     // F = qE, a = F/m
-     const ax = (targetQ * Ex) / (mass * 5); // scaled for vis
+     const ax = (targetQ * Ex) / (mass * 5);
      const ay = (targetQ * Ey) / (mass * 5);
      vx += ax * dt; vy += ay * dt;
      cx += vx * dt; cy += vy * dt;
@@ -659,9 +662,10 @@ function undoStroke(){ drawings.pop(); customEqs.pop(); customFLs.pop(); redraw(
 
 // ── Free Mode Logic ──────────────────────────────────
 function addFree(type){
-  if(type==='pos') freeElectrodes.push({type:'circle', cx:14, cy:14, r:1, labelMagnitude:1});
-  else if(type==='neg') freeElectrodes.push({type:'circle', cx:14, cy:14, r:1, labelMagnitude:-1});
-  else freeElectrodes.push({type:'bar', x1:10, x2:18, y1:13.5, y2:14.5, cy:14, labelMagnitude:2});
+  const off = (freeElectrodes.length * 2) % 10;
+  if(type==='pos') freeElectrodes.push({type:'circle', cx:14 - off + 2, cy:14 + off - 2, r:1, labelMagnitude:1});
+  else if(type==='neg') freeElectrodes.push({type:'circle', cx:14 - off + 2, cy:14 + off - 2, r:1, labelMagnitude:-1});
+  else freeElectrodes.push({type:'bar', x1:10 - off + 2, x2:18 - off + 2, y1:13.5 + off - 2, y2:14.5 + off - 2, cy:14 + off - 2, labelMagnitude:2});
   selectedFree = freeElectrodes.length-1;
   showFreeEdit(); redraw();
 }
@@ -813,17 +817,37 @@ function drawFLines(){
 }
 
 function traceLine(sx, sy){
-  let cx=sx, cy=sy; const step=0.22;
+  let cx=sx, cy=sy; const step=0.1;
   ctx.beginPath(); ctx.moveTo(cx*PX, cy*PX);
-  for(let s=0; s<450; s++){
+  for(let s=0; s<600; s++){
      const {Ex, Ey} = eF(cx, cy);
      const m = Math.hypot(Ex, Ey);
      if(m<0.01) break;
      cx += (Ex/m)*step; cy += (Ey/m)*step;
      ctx.lineTo(cx*PX, cy*PX);
      if(cx<0||cx>GW||cy<0||cy>GH||inEl(cx,cy)) break;
-     if(s%40===39) arrw(cx*PX, cy*PX, Ex, Ey, 10); 
+     if(s%80===79) arrw(cx*PX, cy*PX, Ex, Ey, 10); 
   }
+  ctx.stroke();
+}
+
+function traceBidirectional(sx, sy){
+  const step=0.1;
+  function traceDir(dir) {
+      let cx=sx, cy=sy;
+      for(let s=0; s<450; s++){
+         const {Ex, Ey} = eF(cx, cy);
+         const m = Math.hypot(Ex, Ey);
+         if(m<0.01) break;
+         cx += dir*(Ex/m)*step; cy += dir*(Ey/m)*step;
+         ctx.lineTo(cx*PX, cy*PX);
+         if(cx<0||cx>GW||cy<0||cy>GH||inEl(cx,cy)) break;
+         if(dir===1 && s%80===79) arrw(cx*PX, cy*PX, Ex, Ey, 10); 
+      }
+  }
+  ctx.beginPath();
+  ctx.moveTo(sx*PX, sy*PX); traceDir(1);
+  ctx.moveTo(sx*PX, sy*PX); traceDir(-1);
   ctx.stroke();
 }
 
@@ -903,7 +927,12 @@ function drawEl(el, isP, selected){
 function startAnim(){
   if(animating) return;
   animating=true; animT=0; animStart=null;
-  animPath = traceTrajectory(ptA, workQ, workMass, workV0 >= 0);
+  animPath = [];
+  const steps = 100;
+  for (let i = 0; i <= steps; i++) {
+     const t = i / steps;
+     animPath.push({ gx: ptA.gx + t*(ptB.gx - ptA.gx), gy: ptA.gy + t*(ptB.gy - ptA.gy) });
+  }
   function loop(ts){
      if(!animStart) animStart=ts;
      animT = Math.min(1, (ts-animStart)/ANIM_MS);
@@ -960,7 +989,7 @@ function drawManLines(){
   });
 }
 function drawCustomEqs(){ customEqs.forEach(c=>{ const {px,py}=g2p(c.gx,c.gy); ctx.fillText(c.v.toFixed(1)+'V', px, py); });}
-function drawCustomFLs(){ customFLs.forEach(c=>traceLine(c.gx, c.gy)); }
+function drawCustomFLs(){ customFLs.forEach(c=>traceBidirectional(c.gx, c.gy)); }
 function drawWPts(){
   const drawP = (p, label) => {
     const {px,py} = g2p(p.gx, p.gy);
