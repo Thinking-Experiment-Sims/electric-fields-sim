@@ -718,9 +718,9 @@ function updateWorkPhysics(){
   }
   
   const res = document.getElementById('wkRes');
-  if(Math.abs(Work)<.05){res.className='wk-res wk-zer';res.innerHTML='W ≈ 0 μJ — Equipotential path';}
-  else if(Work>0){res.className='wk-res wk-pos';res.innerHTML=`W = +${Work.toFixed(2)} μJ — Accelerated`;}
-  else{res.className='wk-res wk-neg';res.innerHTML=`W = ${Work.toFixed(2)} μJ — Decelerated`;}
+  if(Math.abs(Work)<.05){res.className='wk-res wk-zer';res.innerHTML='W ≈ 0 μJ — Equipotential path no net work';}
+  else if(Work>0){res.className='wk-res wk-pos';res.innerHTML=`W = +${Work.toFixed(2)} μJ — 💨 Field does work (spontaneous)`;}
+  else{res.className='wk-res wk-neg';res.innerHTML=`W = ${Work.toFixed(2)} μJ — ✋ External work needed (push)`;}
   
   drawEBars(KEi, KEf, Work);
 }
@@ -766,8 +766,7 @@ function drawHeat(){
 }
 
 // ── Equipotentials (Marching Squares) ─────────────────
-function drawEquip(){
-  const levels = [1,2,3,4,5];
+function drawEquipLevels(levels, isThick){
   const RX=70, RY=70;
   const vg=new Float32Array(RX*RY);
   for(let j=0;j<RY;j++) for(let i=0;i<RX;i++){
@@ -776,7 +775,7 @@ function drawEquip(){
   }
 
   for(const lv of levels){
-    ctx.strokeStyle=vCol(lv/6); ctx.lineWidth=2; ctx.beginPath();
+    ctx.strokeStyle=vCol(lv/6); ctx.lineWidth=isThick?2:1.5; ctx.beginPath();
     for(let j=0;j<RY-1;j++) for(let i=0;i<RX-1;i++){
       const v00=vg[j*RX+i],v10=vg[j*RX+i+1],v01=vg[(j+1)*RX+i],v11=vg[(j+1)*RX+i+1];
       if([v00,v10,v01,v11].some(isNaN)) continue;
@@ -793,6 +792,10 @@ function drawEquip(){
     }
     ctx.stroke();
   }
+}
+
+function drawEquip(){
+  drawEquipLevels([1,2,3,4,5], true);
 }
 
 // ── Field Lines ───────────────────────────────────────
@@ -826,7 +829,9 @@ function traceLine(sx, sy){
      cx += (Ex/m)*step; cy += (Ey/m)*step;
      ctx.lineTo(cx*PX, cy*PX);
      if(cx<0||cx>GW||cy<0||cy>GH||inEl(cx,cy)) break;
-     if(s%80===79) arrw(cx*PX, cy*PX, Ex, Ey, 10); 
+     if(s%80===79) {
+         ctx.stroke(); arrw(cx*PX, cy*PX, Ex, Ey, 10); ctx.beginPath(); ctx.moveTo(cx*PX, cy*PX);
+     } 
   }
   ctx.stroke();
 }
@@ -835,6 +840,7 @@ function traceBidirectional(sx, sy){
   const step=0.1;
   function traceDir(dir) {
       let cx=sx, cy=sy;
+      ctx.beginPath(); ctx.moveTo(cx*PX, cy*PX);
       for(let s=0; s<450; s++){
          const {Ex, Ey} = eF(cx, cy);
          const m = Math.hypot(Ex, Ey);
@@ -842,13 +848,14 @@ function traceBidirectional(sx, sy){
          cx += dir*(Ex/m)*step; cy += dir*(Ey/m)*step;
          ctx.lineTo(cx*PX, cy*PX);
          if(cx<0||cx>GW||cy<0||cy>GH||inEl(cx,cy)) break;
-         if(dir===1 && s%80===79) arrw(cx*PX, cy*PX, Ex, Ey, 10); 
+         if(dir===1 && s%80===79) {
+             ctx.stroke(); arrw(cx*PX, cy*PX, Ex, Ey, 10); ctx.beginPath(); ctx.moveTo(cx*PX, cy*PX);
+         }
       }
+      ctx.stroke();
   }
-  ctx.beginPath();
-  ctx.moveTo(sx*PX, sy*PX); traceDir(1);
-  ctx.moveTo(sx*PX, sy*PX); traceDir(-1);
-  ctx.stroke();
+  traceDir(1);
+  traceDir(-1);
 }
 
 function arrw(x,y,dx,dy,sz){
@@ -952,6 +959,18 @@ function drawAnimatedTrajectory(){
   for(let i=0; i<=idx; i++) ctx.lineTo(animPath[i].gx*PX, animPath[i].gy*PX);
   ctx.strokeStyle='rgba(39, 174, 96, 0.4)'; ctx.lineWidth=3; ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
   
+  ctx.save();
+  for(let i=10;i>=0;i--){
+    const ti = idx - i*2;
+    if(ti<0) continue;
+    const pt = animPath[ti];
+    const {px:tpx, py:tpy} = g2p(pt.gx, pt.gy);
+    const alpha=(1-i/10)*0.32;
+    ctx.beginPath(); ctx.arc(tpx, tpy, 4+(10-i)*0.28, 0, Math.PI*2);
+    ctx.fillStyle=`rgba(${workQ>0?'230,126,34':'41,128,185'},${alpha})`; ctx.fill();
+  }
+  ctx.restore();
+
   ctx.beginPath(); ctx.arc(px,py,9,0,Math.PI*2);
   ctx.fillStyle=workQ>0?'#e67e22':'#2980b9'; ctx.fill();
   ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
@@ -963,7 +982,18 @@ function drawAnimatedTrajectory(){
 function resetAnim(){ if(animRAF) cancelAnimationFrame(animRAF); animating=false; animT=0; redraw(); }
 function g2p(gx,gy) { return {px:gx*PX, py:gy*PX}; }
 function p2g(px,py) { return {gx:px/PX, gy:py/PX}; }
-function setTool(t){ currentTool=t; redraw(); }
+function setTool(t){ 
+  currentTool=t; 
+  const ids = {probe:'toolProbe', autoEq:'toolAutoEq', autoFL:'toolAutoFL', drawEq:'toolDrawEq', drawFL:'toolDrawFL'};
+  for(let key in ids){
+     const el = document.getElementById(ids[key]);
+     if(el){
+         if(key===t) el.classList.remove('ghost');
+         else el.classList.add('ghost');
+     }
+  }
+  redraw(); 
+}
 function recordPt(){ 
   const v = probeV.toFixed(2);
   points.push({n:points.length+1, x:probeX.toFixed(1), y:probeY.toFixed(1), v}); 
@@ -988,7 +1018,18 @@ function drawManLines(){
     ctx.strokeStyle=s.type==='drawEq'?'#27ae60':'#2980b9'; ctx.lineWidth=3; ctx.stroke();
   });
 }
-function drawCustomEqs(){ customEqs.forEach(c=>{ const {px,py}=g2p(c.gx,c.gy); ctx.fillText(c.v.toFixed(1)+'V', px, py); });}
+function drawCustomEqs(){ 
+  drawEquipLevels(customEqs.map(c=>c.v), false);
+  ctx.font='bold 10px Inter'; ctx.textAlign='center';
+  customEqs.forEach(c=>{ 
+    const {px,py}=g2p(c.gx,c.gy); 
+    const col=vCol(c.v/6);
+    ctx.fillStyle='rgba(255,255,255,0.92)'; ctx.strokeStyle=col; ctx.lineWidth=1.2;
+    const tw = ctx.measureText(c.v.toFixed(1)+'V').width + 10;
+    ctx.beginPath(); ctx.roundRect(px-tw/2, py-9, tw, 18, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=col; ctx.fillText(c.v.toFixed(1)+'V', px, py+3); 
+  });
+}
 function drawCustomFLs(){ customFLs.forEach(c=>traceBidirectional(c.gx, c.gy)); }
 function drawWPts(){
   const drawP = (p, label) => {
