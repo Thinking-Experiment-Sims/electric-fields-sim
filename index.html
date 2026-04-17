@@ -226,6 +226,24 @@ footer {
           <button class="case-btn"    id="cb4" onclick="setCase(4)">Free Mode</button>
         </div>
       </div>
+      
+      <!-- COMMON TOOLS TOOLBAR -->
+      <div id="commonTools" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.4rem; margin-bottom:.5rem; padding:.4rem; background:var(--surface); border:1px solid var(--border); border-radius:6px;">
+         <div class="button-row compact" style="gap:.2rem; flex-wrap:wrap; margin:0">
+            <button id="toolProbe" onclick="setTool('probe')" title="Hover to read voltage. Click canvas to record.">📍 Probe / Record</button>
+            <button class="ghost" id="toolAutoEq" onclick="setTool('autoEq')">✨ Auto-Eq Line</button>
+            <button class="ghost" id="toolAutoFL" onclick="setTool('autoFL')">✨ Auto-Field Line</button>
+            <button class="ghost" id="toolDrawEq" onclick="setTool('drawEq')">✏️ Draw Eq</button>
+            <button class="ghost" id="toolDrawFL" onclick="setTool('drawFL')">✏️ Draw Field</button>
+         </div>
+         <div class="button-row compact" style="gap:.2rem; flex-wrap:wrap; margin:0">
+            <button onclick="undoStroke()" class="ghost" style="padding:0 .6rem" title="Undo Last">↩ Undo</button>
+            <button onclick="clearDrawings()" class="ghost" style="color:#cc2222; padding:0 .6rem" title="Clear Drawings">🧽 Clear Ink</button>
+            <button onclick="clearPts()" class="ghost" style="color:#cc2222; padding:0 .6rem" title="Clear Data Points">🗑️ Clear Data</button>
+            <button onclick="downloadImage()" style="padding:0 .6rem" title="Download Image">📸 Save</button>
+         </div>
+      </div>
+      
       <canvas id="fieldCanvas" class="sim-canvas"></canvas>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:.5rem; flex-wrap:wrap; gap:1rem;">
         <div class="v-legend" style="margin-top:0">
@@ -243,24 +261,6 @@ footer {
 
     <!-- === Controls panel === -->
     <div class="panel narrow" id="ctrlPanel">
-
-      <!-- COMMON TOOLS -->
-      <div id="commonTools" style="margin-bottom:1.2rem; padding-bottom:1.2rem; border-bottom:1px solid var(--border)">
-        <p class="hint" id="toolHint" style="font-size:.81rem; margin-top:0; margin-bottom:.5rem;">Hover to read voltage. Click the canvas to record a point.</p>
-        <div class="button-row compact" style="flex-wrap:wrap">
-          <button id="toolProbe" onclick="setTool('probe')">📍 Probe / Record</button>
-          <button class="ghost" id="toolAutoEq" onclick="setTool('autoEq')">✨ Auto-Eq Line</button>
-          <button class="ghost" id="toolAutoFL" onclick="setTool('autoFL')">✨ Auto-Field Line</button>
-          <button class="ghost" id="toolDrawEq" onclick="setTool('drawEq')">✏️ Draw Eq Line</button>
-          <button class="ghost" id="toolDrawFL" onclick="setTool('drawFL')">✏️ Draw Field</button>
-        </div>
-        <div class="button-row compact" style="margin-top:.5rem;flex-wrap:wrap">
-          <button onclick="undoStroke()" style="flex:1;min-width:110px">↩ Undo Last</button>
-          <button onclick="clearDrawings()" style="flex:1;min-width:110px">🧽 Clear All</button>
-          <button onclick="clearPts()" style="flex:1;min-width:110px">🗑️ Clear Data</button>
-          <button onclick="downloadImage()" style="flex:1;min-width:110px">📸 Download</button>
-        </div>
-      </div>
 
       <!-- TF PANEL (Free Mode Controls) -->
       <div id="tfPanel" class="hidden" style="margin-bottom: 1.2rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--border)">
