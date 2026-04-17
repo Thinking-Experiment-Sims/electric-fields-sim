@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,44 +7,33 @@
 <meta name="description" content="Interactive simulation for mapping electric fields and potentials. Students probe voltage across three electrode configurations.">
 <link rel="icon" type="image/png" sizes="32x32" href="https://vladimirlopez.github.io/the-thinking-experiment/assets/favicon-32.png"/>
 <style>
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
-  --bg-top: #e9f4fb;
-  --bg-bottom: #fff4dd;
-  --card: #ffffff;
-  --ink: #123140;
-  --muted: #4b6570;
-  --accent: #0f7e9b;
-  --accent-strong: #095f76;
-  --warm: #d67b19;
-  --ok: #1a7f4e;
-  --warn: #9a5d00;
-  --danger: #c0392b;
+  --bg-950: #e9f4fb;
+  --bg-900: #fff4dd;
+  --bg-800: #ffffff;
+  --text-100: #123140;
+  --text-300: #4b6570;
+  --text-500: #4b6570;
+  --gold-500: #0f7e9b;
+  --gold-400: #0b5f77;
+  --gold-300: #d67b19;
+  --surface: rgba(255, 255, 255, 0.96);
+  --surface-alt: rgba(247, 252, 255, 0.98);
   --border: #c8dbe3;
-  --shadow: 0 12px 24px rgba(12, 54, 68, 0.12);
-  --shadow-md: 0 10px 18px rgba(12, 54, 68, 0.08);
-  --radius: 12px;
-  --radius-sm: 8px;
+  --shadow-lg: 0 12px 24px rgba(12, 54, 68, 0.12);
+  --app-bg:
+    radial-gradient(1200px 700px at 8% 2%, rgba(19, 143, 176, 0.18), transparent 62%),
+    radial-gradient(900px 600px at 92% 98%, rgba(220, 132, 32, 0.18), transparent 66%),
+    linear-gradient(165deg, #e9f4fb, #fff4dd);
+  --panel-text-strong: #123140;
+  --rail-tick: #123140;
+  --pe-color: #2979ff;
+  --ke-color: #e65100;
+  --me-color: #2e7d32;
   --pos:#cc2222; --neg:#2244cc;
-}
-[data-theme="dark"]:root {
-  --bg-top: #11141b;
-  --bg-bottom: #090b0f;
-  --card: #11141b;
-  --ink: #eef2f9;
-  --muted: #c9d1df;
-  --accent: #c8a24a;
-  --accent-strong: #d8b767;
-  --warm: #e5cc8f;
-  --ok: #d8b767;
-  --warn: #f2c383;
-  --danger: #f08080;
-  --border: rgba(229, 204, 143, 0.28);
-  --shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.24);
-  --pos:#ff7777; --neg:#6688ff;
 }
 
 /* ── Base ────────────────────────────────────────────────────── */
@@ -52,113 +41,146 @@
 h1, h2, h3, h4, p, dl, dt, dd, summary, ul, ol, li { margin: 0; }
 html, body { margin: 0; min-height: 100%; }
 body {
-  font-family: "IBM Plex Sans", sans-serif;
-  color: var(--ink);
+  font-family: "Inter", "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: var(--text-100);
+  background: var(--app-bg);
   line-height: 1.45;
-  background: radial-gradient(1200px 700px at 8% 2%, rgba(19, 143, 176, 0.12), transparent 62%), linear-gradient(165deg, var(--bg-top), var(--bg-bottom));
   overflow-x: hidden;
 }
-.bg-grid { position: fixed; inset: 0; z-index: -1; background-image: linear-gradient(rgba(18, 49, 64, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(18, 49, 64, 0.05) 1px, transparent 1px); background-size: 42px 42px; mask-image: radial-gradient(circle at center, #000 44%, transparent 96%); }
-[data-theme="dark"] .bg-grid { background-image: linear-gradient(rgba(229, 204, 143, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(229, 204, 143, 0.06) 1px, transparent 1px); }
+.bg-grid {
+  position: fixed; inset: 0; z-index: -1;
+  background-image: linear-gradient(rgba(15, 126, 155, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(214, 123, 25, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at center, black 42%, transparent 95%);
+}
 
 /* ── Components ──────────────────────────────────────────────── */
 .shell { width: min(1500px, calc(100% - 1.2rem)); margin-inline: auto; }
-.hero { margin-top: 1rem; border: 1px solid var(--border); border-left: 8px solid var(--accent); border-radius: var(--radius); padding: 1.1rem 1.2rem; background: var(--card); box-shadow: var(--shadow); }
+.hero {
+  margin-top: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem 1.4rem;
+  padding-right: 1.4rem;
+  background: linear-gradient(160deg, #ffffff, #f7fbfd);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: ""; position: absolute; inset: 0 auto 0 0;
+  width: 12px; background: var(--gold-500); border-radius: 14px 0 0 14px;
+}
 .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; }
-.kicker { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent-strong); font-weight: 700; }
-.hero h1 { margin-top: 0.24rem; font-size: clamp(1.4rem, 2.4vw, 2.2rem); }
-.subtitle { margin-top: 0.4rem; max-width: 88ch; color: var(--muted); }
+.kicker {
+  margin: 0; font-size: 0.8rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--gold-400); font-weight: 700;
+}
+.hero h1 {
+  font-size: clamp(1.8rem, 2.4vw, 3rem);
+  margin-top: 0.35rem; color: var(--panel-text-strong);
+  line-height: 1.05; overflow-wrap: anywhere;
+}
+.subtitle { margin: 0.38rem 0 0; color: var(--text-300); max-width: 75ch; }
 
 .app-layout { margin-top: 0.95rem; margin-bottom: 1.6rem; display: grid; gap: 0.9rem; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: start; }
-.panel { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); padding: 1rem; }
-[data-theme="dark"] .panel { background: linear-gradient(165deg, #11141b, #0b0f16); }
+.panel {
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface); padding: 1rem;
+  box-shadow: 0 6px 16px rgba(12, 54, 68, 0.08);
+}
 .narrow { grid-column: span 4; }
 .wide { grid-column: span 8; }
 .full { grid-column: span 12; }
 
-button { border: 1px solid #9dbac5; border-radius: var(--radius-sm); background: #f6fbfd; color: var(--ink); font-weight: 700; padding: 0.53rem 0.75rem; cursor: pointer; transition: transform 0.15s; }
-[data-theme="dark"] button { background: #1e2430; color: #eef2f9; border-color: rgba(229, 204, 143, 0.28); }
-button.primary { background: linear-gradient(160deg, #0d839f, #0b5f77); color: #fff; border-color: #0a5d74; }
-[data-theme="dark"] button.primary { background: linear-gradient(160deg, #d8b767, #c8a24a); color: #241a08; border-color: #b88f35; }
-button.ghost { background: transparent; border-color: transparent; }
-button.ghost:hover { background: rgba(0,0,0,.05); }
+.display-toggle {
+  min-width: 156px; position: absolute; top: 1rem; right: 1rem;
+  padding-inline: 1rem; z-index: 2;
+}
+
+button {
+  border: 1px solid var(--gold-500); border-radius: 10px;
+  background: linear-gradient(160deg, #0d839f, #0b5f77);
+  color: #ffffff; border-color: #0a5d74;
+  font-weight: 700; font: inherit;
+  padding: 0.58rem 0.82rem; cursor: pointer;
+  transition: all 0.15s;
+}
+button:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+button.ghost {
+  background: #f6fbfd; color: var(--text-100); border-color: #9dbac5;
+}
+button:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
 .button-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .button-row.compact { gap: 0.4rem; }
-button.ghost { background: #eef8fb; border-color: #9dbac5; }
-[data-theme="dark"] button.ghost { background: rgba(200,162,74,0.1); border-color:rgba(229,204,143,0.28); }
-button:hover:not(:disabled) { transform: translateY(-1px); opacity:.92; }
-button:disabled { opacity:.5; cursor:not-allowed; }
-.status { background:rgba(15,126,155,.06); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.55rem .7rem; font-size:.83rem; color:var(--muted); }
-input[type="text"], input[type="number"], input[type="password"] { font:inherit; border:1px solid #a9c4cf; border-radius:var(--radius-sm); background:#f9fdff; color:var(--ink); padding:.46rem .56rem; width:100%; }
-[data-theme="dark"] input[type="text"],[data-theme="dark"] input[type="number"],[data-theme="dark"] input[type="password"] { background:#1e2430; color:#eef2f9; border-color:rgba(229,204,143,.24); }
+.status { background:rgba(15,126,155,.06); border:1px solid var(--border); border-radius:8px; padding:.55rem .7rem; font-size:.83rem; color:var(--text-300); }
+input[type="text"], input[type="number"], input[type="password"] { font:inherit; border:1px solid #a9c4cf; border-radius:8px; background:#f9fdff; color:var(--text-100); padding:.46rem .56rem; width:100%; }
 
 /* ── Sim-specific ──────────────────────────────────────────── */
 
 .vm-wrap { background:#0d0d0d; border-radius:10px; padding:.8rem; text-align:center; border:2px solid #2a2a2a; box-shadow:inset 0 0 20px rgba(0,200,100,.06); margin-bottom:.5rem; }
 .vm-val  { font-family: 'IBM Plex Sans', monospace; font-size:2.8rem; font-weight:700; color:#00ff88; text-shadow:0 0 10px rgba(0,255,136,.4); letter-spacing:2px; height:3.2rem; display:flex; align-items:center; justify-content:center; }
 .vm-lbl  { color:#5cb85c; font-size:.68rem; text-transform:uppercase; letter-spacing:3px; margin-top:.2rem; opacity:.7; }
-[data-theme="dark"] .vm-wrap { background:#0a0a10; }
 
 .case-row { display:flex; gap:.3rem; }
 .case-btn { flex:1; padding:.35rem .2rem; font-size:.78rem; text-align:center; }
 .case-btn.on { background:linear-gradient(160deg,#0d839f,#0b5f77); color:#fff; border-color:#0a5d74; }
-[data-theme="dark"] .case-btn.on { background:linear-gradient(160deg,#d8b767,#c8a24a); color:#241a08; border-color:#b88f35; }
 
-.data-scroll { max-height:175px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm); }
+.data-scroll { max-height:175px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; }
 .data-scroll table { width:100%; }
 
-.t-banner { display:none; align-items:center; gap:.6rem; margin-top:.5rem; padding:.45rem 1rem; background:linear-gradient(90deg,#0f4068,#1a5276); color:#fff; border-radius:var(--radius-sm); font-weight:700; font-size:.87rem; }
+.t-banner { display:none; align-items:center; gap:.6rem; margin-top:.5rem; padding:.45rem 1rem; background:linear-gradient(90deg,#0f4068,#1a5276); color:#fff; border-radius:8px; font-weight:700; font-size:.87rem; }
 .t-banner.on { display:flex; }
 .t-banner button { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.3); padding:.2rem .55rem; font-size:.78rem; }
 
 .t-tabs { display:flex; gap:.3rem; margin-bottom:.7rem; }
-.t-tabs .tab-btn { flex:1; font-size:.82rem; padding:.45rem .2rem; border-radius:var(--radius-sm); background:#edf7fb; border-color:var(--border); }
+.t-tabs .tab-btn { flex:1; font-size:.82rem; padding:.45rem .2rem; border-radius:8px; background:#edf7fb; border-color:var(--border); }
 .t-tabs .tab-btn.active { background:linear-gradient(160deg,#0d839f,#0b5f77); color:#fff; border-color:#0a5d74; }
-[data-theme="dark"] .t-tabs .tab-btn { background:#1e2430; }
-[data-theme="dark"] .t-tabs .tab-btn.active { background:linear-gradient(160deg,#d8b767,#c8a24a); color:#241a08; border-color:#b88f35; }
 
-.rm { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.32rem .48rem; font-size:.76rem; color:var(--muted); }
-.rm .v { font-size:.93rem; font-weight:700; color:var(--ink); display:block; margin-top:.08rem; }
+.rm { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:.32rem .48rem; font-size:.76rem; color:var(--text-300); }
+.rm .v { font-size:.93rem; font-weight:700; color:var(--text-100); display:block; margin-top:.08rem; }
 
-.wk-res { text-align:center; font-weight:700; font-size:.92rem; padding:.5rem; border-radius:var(--radius-sm); border:2px solid; }
+.wk-res { text-align:center; font-weight:700; font-size:.92rem; padding:.5rem; border-radius:8px; border:2px solid; }
 .wk-pos { background:#e6fff2; color:#1a7f4e; border-color:#a3d9bb; }
 .wk-neg { background:#fff0f0; color:#c0392b; border-color:#f5b8b2; }
-.wk-zer { background:var(--card); color:var(--muted); border-color:var(--border); }
-[data-theme="dark"] .wk-pos { background:rgba(26,127,78,.15); color:#4dff9c; border-color:#1a7f4e; }
-[data-theme="dark"] .wk-neg { background:rgba(192,57,43,.15); color:#ff8080; border-color:#c0392b; }
+.wk-zer { background:var(--surface); color:var(--text-300); border-color:var(--border); }
 
-.phys-box { padding:.55rem .7rem; background:linear-gradient(135deg,#f0f8ff,#e8f4fd); border-left:4px solid var(--accent); border-radius:var(--radius-sm); font-size:.81rem; line-height:1.55; color:var(--ink); margin-top:.5rem; }
-[data-theme="dark"] .phys-box { background:linear-gradient(135deg,#1b2330,#141e2e); }
+.phys-box { padding:.55rem .7rem; background:linear-gradient(135deg,#f0f8ff,#e8f4fd); border-left:4px solid var(--gold-500); border-radius:8px; font-size:.81rem; line-height:1.55; color:var(--text-100); margin-top:.5rem; }
 
 .bdg { display:inline-block; width:15px; height:15px; border-radius:50%; text-align:center; line-height:15px; font-size:.62rem; font-weight:800; color:#fff; }
 .bdg-a { background:#e67e22; } .bdg-b { background:#8e44ad; }
 
 .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); align-items:center; justify-content:center; z-index:999; }
 .modal-bg.open { display:flex; }
-.modal-box { background:var(--card); border-radius:var(--radius); padding:1.7rem; width:min(340px,90vw); box-shadow:var(--shadow); border:1px solid var(--border); }
+.modal-box { background:var(--surface); border-radius:12px; padding:1.7rem; width:min(340px,90vw); box-shadow:var(--shadow-lg); border:1px solid var(--border); }
 .modal-box h3 { font-size:1.15rem; margin-bottom:.45rem; }
 .modal-box label { margin-top:.65rem; }
 .modal-box input { width:100%; margin-top:.22rem; }
 
-.v-legend { display:flex; align-items:center; gap:.45rem; font-size:.73rem; color:var(--muted); margin-top:.28rem; justify-content:center; }
+.v-legend { display:flex; align-items:center; gap:.45rem; font-size:.73rem; color:var(--text-300); margin-top:.28rem; justify-content:center; }
 .v-grad { width:110px; height:9px; border-radius:5px; background:linear-gradient(to right,#0000ff,#00ffff,#00ff00,#ffff00,#ff6600,#ff0000); border:1px solid rgba(0,0,0,.12); }
 
 #fieldCanvas { touch-action:none; cursor:crosshair; display:block; width:100%; height:auto; border-radius:8px; border:1px solid var(--border); }
-#energyCanvas { display:block; width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); }
+#energyCanvas { display:block; width:100%; border:1px solid var(--border); border-radius:8px; }
 .hidden  { display: none !important; }
 .panel-head { margin-bottom:.6rem; }
-.hint { margin-top:.3rem; color:var(--muted); font-size:.9rem; }
+.hint { margin-top:.3rem; color:var(--text-300); font-size:.9rem; }
 details { border:1px solid var(--border); border-radius:8px; background:rgba(0,0,0,.02); padding:.5rem .65rem; }
-[data-theme="dark"] details { background:rgba(255,255,255,.03); }
-summary { cursor:pointer; color:var(--accent-strong); font-weight:700; font-size:.86rem; }
-label { display:flex; flex-direction:column; gap:.3rem; font-size:.9rem; color:var(--muted); }
-input[type="range"] { width:100%; accent-color:var(--accent); }
-input[type="checkbox"] { accent-color:var(--accent); }
-.toggle-line { flex-direction:row; align-items:center; gap:.5rem; color:var(--ink); font-size:.86rem; }
+summary { cursor:pointer; color:var(--gold-500); font-weight:700; font-size:.86rem; }
+label { display:flex; flex-direction:column; gap:.3rem; font-size:.9rem; color:var(--text-300); }
+input[type="range"] { width:100%; accent-color:var(--gold-500); }
+input[type="checkbox"] { accent-color:var(--gold-500); }
+.toggle-line { flex-direction:row; align-items:center; gap:.5rem; color:var(--text-100); font-size:.86rem; }
 table { width:100%; border-collapse:collapse; }
 th,td { border:1px solid var(--border); padding:.4rem .52rem; font-size:.83rem; text-align:left; }
 th { background:rgba(0,0,0,.03); font-weight:700; }
-[data-theme="dark"] th { background:rgba(255,255,255,.05); }
+
+footer {
+  text-align: center; color: var(--text-500); padding: 1.5rem;
+  margin-top: 1rem; font-size: 0.88rem;
+}
+
 @media (max-width: 1100px) { .narrow, .wide { grid-column: span 12; } }
 </style>
 </head>
@@ -167,19 +189,16 @@ th { background:rgba(0,0,0,.03); font-weight:700; }
 <div class="shell">
 
   <!-- Hero -->
-  <section class="hero" style="margin-top:.7rem">
-    <div class="hero-top">
-      <div>
-        <div class="kicker">Physics Lab Simulation</div>
-        <h1>Electric Fields &amp; Potentials</h1>
-        <p class="subtitle">Probe voltage at different points — just like the real Pasco conducting-paper lab. Record data, then sketch your own equipotential lines and field lines on paper.</p>
+  <div class="hero">
+      <div class="hero-top">
+          <div>
+              <p class="kicker">The Thinking Experiment</p>
+              <h1>Electric Fields &amp; Potentials</h1>
+              <p class="subtitle">Probe voltage at different points — just like the real Pasco conducting-paper lab. Record data, then sketch your own equipotential lines and field lines on paper.</p>
+          </div>
       </div>
-      <div style="display:flex;gap:.4rem;align-items:flex-start;flex-shrink:0">
-        <button id="tModeBtn" class="ghost">🔒 Teacher Mode</button>
-        <button id="themeBtn" class="ghost">🌙 Dark</button>
-      </div>
-    </div>
-  </section>
+      <button id="tModeBtn" class="display-toggle ghost">🔒 Teacher Mode</button>
+  </div>
 
   <!-- Teacher banner -->
   <div class="t-banner" id="tBanner">
@@ -194,7 +213,7 @@ th { background:rgba(0,0,0,.03); font-weight:700; }
     <!-- === Canvas panel === -->
     <div class="panel wide" style="padding:.7rem">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:.4rem">
-        <h2 id="caseHead" style="font-size:.92rem;color:var(--accent);margin:0">Case I — Two Circular Electrodes</h2>
+        <h2 id="caseHead" style="font-size:.92rem;color:var(--gold-500);margin:0">Case I — Two Circular Electrodes</h2>
         <div class="case-row">
           <button class="case-btn on" id="cb1" onclick="setCase(1)">Case I</button>
           <button class="case-btn"    id="cb2" onclick="setCase(2)">Case II</button>
@@ -215,7 +234,7 @@ th { background:rgba(0,0,0,.03); font-weight:700; }
       <div id="commonTools" style="margin-bottom:.6rem; padding-bottom:.6rem; border-bottom:1px solid var(--border)">
         <p class="hint" id="toolHint" style="font-size:.81rem; margin-top:0; margin-bottom:.4rem;">Hover to read voltage. Click the canvas to record a point.</p>
         <div class="button-row compact" style="flex-wrap:wrap">
-          <button class="primary" id="toolProbe" onclick="setTool('probe')">📍 Probe / Record</button>
+          <button id="toolProbe" onclick="setTool('probe')">📍 Probe / Record</button>
           <button class="ghost" id="toolAutoEq" onclick="setTool('autoEq')">✨ Auto-Eq Line</button>
           <button class="ghost" id="toolAutoFL" onclick="setTool('autoFL')">✨ Auto-Field Line</button>
           <button class="ghost" id="toolDrawEq" onclick="setTool('drawEq')">✏️ Draw Eq Line</button>
@@ -224,7 +243,7 @@ th { background:rgba(0,0,0,.03); font-weight:700; }
         <div class="button-row compact" style="margin-top:.38rem;flex-wrap:wrap">
           <button onclick="clearDrawings()" style="flex:1;min-width:110px">🧽 Clear Drawings</button>
           <button onclick="clearPts()" style="flex:1;min-width:110px">🗑️ Clear Data Points</button>
-          <button class="primary" onclick="downloadImage()" style="flex:1;min-width:110px">📸 Download Image</button>
+          <button onclick="downloadImage()" style="flex:1;min-width:110px">📸 Download Image</button>
         </div>
       </div>
 
@@ -241,16 +260,16 @@ th { background:rgba(0,0,0,.03); font-weight:700; }
         <div style="margin-top:.6rem">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.22rem">
             <strong style="font-size:.83rem">Data Table</strong>
-            <span id="ptCnt" style="font-size:.73rem;color:var(--muted)">0 pts</span>
+            <span id="ptCnt" style="font-size:.73rem;color:var(--text-300)">0 pts</span>
           </div>
           <div class="data-scroll">
             <table><thead><tr><th>#</th><th>X (gu)</th><th>Y (gu)</th><th>V (V)</th></tr></thead>
-            <tbody id="dBody"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:.55rem;font-size:.79rem">No points yet</td></tr></tbody></table>
+            <tbody id="dBody"><tr><td colspan="4" style="text-align:center;color:var(--text-300);padding:.55rem;font-size:.79rem">No points yet</td></tr></tbody></table>
           </div>
         </div>
         <details style="margin-top:.6rem">
           <summary>Lab Procedure</summary>
-          <ol style="margin:.38rem 0 0 1rem;font-size:.81rem;color:var(--muted);line-height:1.7">
+          <ol style="margin:.38rem 0 0 1rem;font-size:.81rem;color:var(--text-300);line-height:1.7">
             <li>Select a Case (I, II, or III)</li>
             <li>Hover canvas — probe reads voltage</li>
             <li>Find 4–5 points at the same voltage (e.g. 5 V)</li>
@@ -300,23 +319,23 @@ th { background:rgba(0,0,0,.03); font-weight:700; }
             <div class="rm"><span>W<sub>field</sub> = −q·ΔV</span><span class="v" id="wkD">--</span></div>
           </div>
           <label style="margin-top:.3rem;font-size:.83rem">
-            Charge q: <span id="qDisp" style="font-weight:700;color:var(--accent)">+1 μC</span>
+            Charge q: <span id="qDisp" style="font-weight:700;color:var(--gold-500)">+1 μC</span>
             <input type="range" id="qSlider" min="-3" max="3" step="1" value="1" oninput="updateQ()">
           </label>
           <div id="wkRes" class="wk-res wk-zer" style="margin-top:.42rem">Set A and B on the field</div>
           <div class="button-row compact" style="margin-top:.38rem">
-            <button class="primary" id="animBtn" onclick="startAnim()">▶ Animate</button>
+            <button id="animBtn" onclick="startAnim()">▶ Animate</button>
             <button onclick="resetAnim()">↩ Reset</button>
           </div>
           <canvas id="energyCanvas" height="110" style="margin-top:.48rem"></canvas>
           <div class="phys-box" id="physBox">Place A and B on the field to begin.</div>
           <details style="margin-top:.48rem">
             <summary>Key Equations</summary>
-            <div style="margin-top:.32rem;font-size:.8rem;line-height:1.78;color:var(--muted)">
-              <b style="color:var(--ink)">ΔV = V<sub>B</sub> − V<sub>A</sub></b><br>
-              <b style="color:var(--ink)">W<sub>field</sub> = −q·ΔV</b><br>Work done by field on charge q moving A→B<br>
-              <b style="color:var(--ink)">ΔKE = W<sub>field</sub></b> (Work-Energy Theorem)<br>
-              <b style="color:var(--ink)">ΔPE = −W<sub>field</sub></b> (Conservative field)<br>
+            <div style="margin-top:.32rem;font-size:.8rem;line-height:1.78;color:var(--text-300)">
+              <b style="color:var(--text-100)">ΔV = V<sub>B</sub> − V<sub>A</sub></b><br>
+              <b style="color:var(--text-100)">W<sub>field</sub> = −q·ΔV</b><br>Work done by field on charge q moving A→B<br>
+              <b style="color:var(--text-100)">ΔKE = W<sub>field</sub></b> (Work-Energy Theorem)<br>
+              <b style="color:var(--text-100)">ΔPE = −W<sub>field</sub></b> (Conservative field)<br>
               <hr style="border-color:var(--border);margin:.35rem 0">
               <span style="color:#1a7f4e">W &gt; 0 → spontaneous (field pushes)</span><br>
               <span style="color:#c0392b">W &lt; 0 → needs external work (push)</span><br>
@@ -328,17 +347,21 @@ th { background:rgba(0,0,0,.03); font-weight:700; }
 
     </div><!-- /narrow -->
   </div><!-- /app-layout -->
+
+  <footer>
+      <p>© 2026 Vladimir Lopez · The Thinking Experiment · Interactive Physics Simulations</p>
+  </footer>
 </div><!-- /shell -->
 
 <!-- Login modal -->
 <div class="modal-bg" id="loginModal">
   <div class="modal-box">
     <h3>🔒 Teacher Mode</h3>
-    <p style="color:var(--muted);font-size:.86rem">Enter the password to unlock field visualizer and work demo.</p>
+    <p style="color:var(--text-300);font-size:.86rem">Enter the password to unlock field visualizer and work demo.</p>
     <label>Password<input type="password" id="pwIn" placeholder="Enter password…" onkeydown="if(event.key==='Enter')tryLogin()"></label>
     <div id="pwErr" class="status error hidden" style="margin-top:.38rem;font-size:.8rem">Incorrect password.</div>
     <div class="button-row" style="margin-top:.85rem">
-      <button class="primary" onclick="tryLogin()">Unlock</button>
+      <button onclick="tryLogin()">Unlock</button>
       <button onclick="closeLogin()">Cancel</button>
     </div>
   </div>
@@ -451,7 +474,6 @@ const ectx=ecvs.getContext('2d');
 
 function g2p(gx,gy){return{px:gx*PX,py:gy*PX};}
 function p2g(px,py){return{gx:px/PX,gy:py/PX};}
-const dk=()=>document.documentElement.getAttribute('data-theme')==='dark';
 
 // ── Mouse events ──────────────────────────────────────
 function cPos(e){
@@ -551,7 +573,7 @@ function drawRecordedPts(){
     const col=vCol(pt.v/6);
     ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2);
     ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle=dk()?'#eef2f9':'#123140';
+    ctx.fillStyle='#123140';
     ctx.font='10px IBM Plex Sans,sans-serif'; ctx.textAlign='center';
     ctx.fillText(pt.v+'V', px, py-8);
   }
@@ -560,7 +582,6 @@ function drawRecordedPts(){
 
 function drawManLines() {
    ctx.save();
-   const d = dk();
    for(const stroke of drawings){
       ctx.beginPath();
       for(let i=0; i<stroke.pts.length; i++){
@@ -568,7 +589,7 @@ function drawManLines() {
          if(i===0) ctx.moveTo(pt.px, pt.py);
          else ctx.lineTo(pt.px, pt.py);
       }
-      ctx.strokeStyle = stroke.type === 'drawEq' ? (d ? '#2ecc71' : '#27ae60') : (d ? '#3498db' : '#2980b9');
+      ctx.strokeStyle = stroke.type === 'drawEq' ? '#27ae60' : '#2980b9';
       ctx.lineWidth = 3;
       ctx.stroke();
    }
@@ -576,30 +597,29 @@ function drawManLines() {
 }
 
 function drawBg(){
-  ctx.fillStyle=dk()?'#131920':'#f8f5ed';
+  ctx.fillStyle='#f8f5ed';
   ctx.fillRect(0,0,CW,CH);
 }
 
 function drawGrid(){
-  const d=dk();
   for(let x=0;x<=GW;x++){
     const maj=x%5===0;
-    ctx.strokeStyle=d?(maj?'rgba(180,210,240,.2)':'rgba(180,210,240,.06)'):(maj?'rgba(70,100,150,.35)':'rgba(70,100,150,.1)');
+    ctx.strokeStyle=(maj?'rgba(70,100,150,.35)':'rgba(70,100,150,.1)');
     ctx.lineWidth=maj?.8:.4;
     ctx.beginPath();ctx.moveTo(x*PX,0);ctx.lineTo(x*PX,CH);ctx.stroke();
   }
   for(let y=0;y<=GH;y++){
     const maj=y%5===0;
-    ctx.strokeStyle=d?(maj?'rgba(180,210,240,.2)':'rgba(180,210,240,.06)'):(maj?'rgba(70,100,150,.35)':'rgba(70,100,150,.1)');
+    ctx.strokeStyle=(maj?'rgba(70,100,150,.35)':'rgba(70,100,150,.1)');
     ctx.lineWidth=maj?.8:.4;
     ctx.beginPath();ctx.moveTo(0,y*PX);ctx.lineTo(CW,y*PX);ctx.stroke();
   }
-  ctx.fillStyle=d?'rgba(170,195,225,.45)':'rgba(65,95,140,.55)';
+  ctx.fillStyle='rgba(65,95,140,.55)';
   ctx.font='10px IBM Plex Sans,sans-serif'; ctx.textAlign='center';
   for(let x=0;x<=GW;x+=5) ctx.fillText(x,x*PX,CH-2);
   ctx.textAlign='right';
   for(let y=0;y<=GH;y+=5) ctx.fillText(y,16,y*PX+4);
-  ctx.fillStyle=d?'rgba(170,195,225,.5)':'rgba(65,95,140,.6)';
+  ctx.fillStyle='rgba(65,95,140,.6)';
   ctx.textAlign='center'; ctx.fillText('X (cm)',CW/2,CH-1);
 }
 
@@ -608,10 +628,9 @@ function drawElecs(){
   drawEl(pos,true); drawEl(neg,false);
 }
 function drawEl(el,isP){
-  const d=dk();
-  const fill=isP?(d?'#4a1515':'#ffe8e8'):(d?'#10204a':'#e8eeff');
-  const strk=isP?(d?'#ff7777':'#cc2222'):(d?'#6688ff':'#2244cc');
-  const txt =isP?(d?'#ff9999':'#cc0000'):(d?'#99aaff':'#0033cc');
+  const fill=isP?'#ffe8e8':'#e8eeff';
+  const strk=isP?'#cc2222':'#2244cc';
+  const txt =isP?'#cc0000':'#0033cc';
   const sym =isP?'+':'−';
   ctx.save();
   if(el.type==='circle'){
@@ -753,7 +772,7 @@ function eqLabel(lv){
 
 // ── Field Lines ───────────────────────────────────────
 function drawFLines(){
-  const d=dk(), col=d?'rgba(190,205,255,.68)':'rgba(25,35,145,.68)';
+  const col='rgba(25,35,145,.68)';
   ctx.strokeStyle=ctx.fillStyle=col; ctx.lineWidth=1.55;
   for(const s of seeds(CFG[activeCase].pos)) traceLine(s.gx,s.gy);
 }
@@ -788,7 +807,7 @@ function traceLine(sgx,sgy){
 }
 
 function drawCustomFLs(){
-  const d=dk(), col=d?'rgba(190,205,255,.9)':'rgba(25,35,145,.9)';
+  const col='rgba(25,35,145,.9)';
   ctx.strokeStyle=ctx.fillStyle=col; ctx.lineWidth=2;
   for(const fl of customFLs) traceBidirectional(fl.gx, fl.gy);
 }
@@ -821,7 +840,7 @@ function traceBidirectional(sgx, sgy){
 
 // ── Arrow grid ────────────────────────────────────────
 function drawArrows(){
-  const d=dk(),col=d?'rgba(180,195,255,.5)':'rgba(35,35,165,.5)';
+  const col='rgba(35,35,165,.5)';
   ctx.strokeStyle=ctx.fillStyle=col; ctx.lineWidth=1;
   const sp=2.5;
   for(let gx=sp;gx<GW;gx+=sp) for(let gy=sp;gy<GH;gy+=sp){
@@ -892,11 +911,14 @@ function drawParticle(){
 
 function setTool(t){
   currentTool = t;
-  document.getElementById('toolProbe').className = (t==='probe') ? 'primary' : 'ghost';
-  document.getElementById('toolAutoEq').className = (t==='autoEq') ? 'primary' : 'ghost';
-  document.getElementById('toolAutoFL').className = (t==='autoFL') ? 'primary' : 'ghost';
-  document.getElementById('toolDrawEq').className = (t==='drawEq') ? 'primary' : 'ghost';
-  document.getElementById('toolDrawFL').className = (t==='drawFL') ? 'primary' : 'ghost';
+  const toolBtns = ['toolProbe', 'toolAutoEq', 'toolAutoFL', 'toolDrawEq', 'toolDrawFL'];
+  toolBtns.forEach(id => {
+    const btn = document.getElementById(id);
+    if(btn) btn.className = (id === 'tool' + t.charAt(0).toUpperCase() + t.slice(1)) ? '' : 'ghost';
+  });
+  // Manual override for probe
+  document.getElementById('toolProbe').className = (t === 'probe') ? '' : 'ghost';
+
   const hint = document.getElementById('toolHint');
   if(t==='probe') hint.innerHTML = 'Hover to read voltage. Click the canvas to record a point.';
   else if(t==='autoEq') hint.innerHTML = 'Click anywhere to instantly trace the equipotential line for that exact voltage.';
@@ -944,7 +966,7 @@ function clearPts(){points=[];renderTable();}
 function renderTable(){
   const tb=document.getElementById('dBody'),cnt=document.getElementById('ptCnt');
   cnt.textContent=points.length+' pt'+(points.length!==1?'s':'');
-  if(!points.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:.55rem;font-size:.79rem">No points yet</td></tr>';return;}
+  if(!points.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text-300);padding:.55rem;font-size:.79rem">No points yet</td></tr>';return;}
   tb.innerHTML=points.map(p=>`<tr><td>${p.n}</td><td>${p.x}</td><td>${p.y}</td><td><b>${p.v}</b></td></tr>`).join('');
   document.querySelector('.data-scroll').scrollTop=9999;
 }
@@ -1026,32 +1048,32 @@ function updateExplain(Va,Vb,W){
 // ── Energy Bars ───────────────────────────────────────
 function drawEBars(Va,Vb,W,currFrac){
   ecvs.width=ecvs.offsetWidth||220; ecvs.height=110;
-  const ew=ecvs.width,eh=110,d=dk();
-  ectx.fillStyle=d?'#131920':'#f4f8fd'; ectx.fillRect(0,0,ew,eh);
+  const ew=ecvs.width,eh=110;
+  ectx.fillStyle='#f4f8fd'; ectx.fillRect(0,0,ew,eh);
   const frac=(currFrac!==undefined)?currFrac:1;
   const KE0=4,PE0=0,KE1=KE0+W*frac,PE1=-W*frac;
   const maxE=Math.max(Math.abs(KE0),Math.abs(KE1),Math.abs(PE0),Math.abs(PE1),1);
   const sc=(eh*.58)/maxE,base=eh*.74,bw=ew*.13,gp=ew*.04;
   const kCol=W>0.05?'#27ae60':W<-0.05?'#e74c3c':'#2980b9';
   const pCol=W>0.05?'#8e44ad':W<-0.05?'#d35400':'#e67e22';
-  eBar(ew*.09,base,bw,KE0,sc,'#2980b9','KE',d);
-  eBar(ew*.09+bw+gp,base,bw,PE0,sc,'#e67e22','PE',d);
-  ectx.strokeStyle=d?'rgba(255,255,255,.08)':'rgba(0,0,0,.08)';
+  eBar(ew*.09,base,bw,KE0,sc,'#2980b9','KE');
+  eBar(ew*.09+bw+gp,base,bw,PE0,sc,'#e67e22','PE');
+  ectx.strokeStyle='rgba(0,0,0,.08)';
   ectx.lineWidth=1; ectx.setLineDash([3,3]);
   ectx.beginPath(); ectx.moveTo(ew*.5,4); ectx.lineTo(ew*.5,eh-4); ectx.stroke();
   ectx.setLineDash([]);
-  eBar(ew*.56,base,bw,KE1,sc,kCol,"KE'",d);
-  eBar(ew*.56+bw+gp,base,bw,PE1,sc,pCol,"PE'",d);
-  ectx.fillStyle=d?'rgba(170,195,230,.45)':'rgba(60,85,130,.55)';
+  eBar(ew*.56,base,bw,KE1,sc,kCol,"KE'");
+  eBar(ew*.56+bw+gp,base,bw,PE1,sc,pCol,"PE'");
+  ectx.fillStyle='rgba(60,85,130,.55)';
   ectx.font='7.5px IBM Plex Sans,sans-serif'; ectx.textAlign='center';
   ectx.fillText('BEFORE A',ew*.24,eh-2); ectx.fillText('AFTER B',ew*.72,eh-2);
 }
-function eBar(x,base,w,val,sc,col,lab,d){
+function eBar(x,base,w,val,sc,col,lab){
   const h=Math.max(Math.abs(val)*sc,2),y=val>=0?base-h:base;
   ectx.fillStyle=col; ectx.beginPath(); ectx.roundRect(x,y,w,h,[3,3,0,0]); ectx.fill();
-  ectx.fillStyle=d?'#ccc':'#333'; ectx.font='7px IBM Plex Sans,sans-serif'; ectx.textAlign='center';
+  ectx.fillStyle='#333'; ectx.font='7px IBM Plex Sans,sans-serif'; ectx.textAlign='center';
   ectx.fillText(val.toFixed(1),x+w/2,val>=0?y-2:y+h+9);
-  ectx.fillStyle=d?'#aaa':'#555'; ectx.font='bold 7.5px IBM Plex Sans,sans-serif';
+  ectx.fillStyle='#555'; ectx.font='bold 7.5px IBM Plex Sans,sans-serif';
   ectx.fillText(lab,x+w/2,base+12);
 }
 
@@ -1076,14 +1098,6 @@ function resetAnim(){
   if(animRAF){cancelAnimationFrame(animRAF);animRAF=null;}
   animating=false; animT=0; redraw();
 }
-
-// ── Theme ─────────────────────────────────────────────
-document.getElementById('themeBtn').onclick=()=>{
-  const d=dk();
-  document.documentElement.setAttribute('data-theme',d?'light':'dark');
-  document.getElementById('themeBtn').textContent=d?'🌙 Dark':'☀️ Light';
-  redraw(); if(mode==='teacher-work') updateWork();
-};
 
 // ── Init ──────────────────────────────────────────────
 function init(){
