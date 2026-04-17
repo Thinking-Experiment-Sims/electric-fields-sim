@@ -246,9 +246,10 @@ footer {
           <button class="ghost" id="toolDrawFL" onclick="setTool('drawFL')">✏️ Draw Field</button>
         </div>
         <div class="button-row compact" style="margin-top:.5rem;flex-wrap:wrap">
-          <button onclick="clearDrawings()" style="flex:1;min-width:110px">🧽 Clear Drawings</button>
-          <button onclick="clearPts()" style="flex:1;min-width:110px">🗑️ Clear Data Points</button>
-          <button onclick="downloadImage()" style="flex:1;min-width:110px">📸 Download Image</button>
+          <button onclick="undoStroke()" style="flex:1;min-width:110px">↩ Undo Last</button>
+          <button onclick="clearDrawings()" style="flex:1;min-width:110px">🧽 Clear All</button>
+          <button onclick="clearPts()" style="flex:1;min-width:110px">🗑️ Clear Data</button>
+          <button onclick="downloadImage()" style="flex:1;min-width:110px">📸 Download</button>
         </div>
       </div>
 
@@ -259,10 +260,10 @@ footer {
             <h2 style="font-size:1rem">Visual Options</h2>
           </div>
           <div class="toggle-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.2rem;">
-            <label class="toggle-line"><input type="checkbox" id="chkEq"  checked onchange="redraw()"> Equipotentials</label>
-            <label class="toggle-line"><input type="checkbox" id="chkFL"  checked onchange="redraw()"> Field Lines</label>
-            <label class="toggle-line"><input type="checkbox" id="chkArr"        onchange="redraw()"> Field Arrows</label>
-            <label class="toggle-line"><input type="checkbox" id="chkHt"         onchange="redraw()"> Heatmap</label>
+            <label class="toggle-line"><input type="checkbox" id="chkEq"  onchange="redraw()"> Equipotentials</label>
+            <label class="toggle-line"><input type="checkbox" id="chkFL"  onchange="redraw()"> Field Lines</label>
+            <label class="toggle-line"><input type="checkbox" id="chkArr" onchange="redraw()"> Field Arrows</label>
+            <label class="toggle-line"><input type="checkbox" id="chkHt"  onchange="redraw()"> Heatmap</label>
           </div>
       </div>
 
@@ -271,6 +272,7 @@ footer {
         <div class="t-tabs">
           <button class="tab-btn active" id="tsBtn" onclick="setAppMode('student')">Inquiry Lab</button>
           <button class="tab-btn"        id="twBtn" onclick="setAppMode('work')">Work Demo</button>
+          <button class="tab-btn"        id="tfBtn" onclick="setAppMode('free')">Free Mode</button>
         </div>
 
         <!-- Student Lab Mode -->
@@ -294,6 +296,13 @@ footer {
             </div>
           </div>
           <details style="margin-top:.6rem">
+            <summary>Electrode Magnitudes</summary>
+            <div style="margin-top:.5rem; display:grid; gap:.5rem">
+              <label>Positive Electrode (V): <input type="number" id="vPosIn" value="6" step="0.5" onchange="updateElectrodeValues()"></label>
+              <label>Negative Electrode (V): <input type="number" id="vNegIn" value="0" step="0.5" onchange="updateElectrodeValues()"></label>
+            </div>
+          </details>
+          <details style="margin-top:.4rem">
             <summary>Lab Procedure</summary>
             <ol style="margin:.38rem 0 0 1rem;font-size:.81rem;color:var(--text-300);line-height:1.7">
               <li>Select a Case (I, II, or III)</li>
@@ -319,13 +328,23 @@ footer {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.32rem;margin:.4rem 0">
             <div class="rm"><span><span class="bdg bdg-a">A</span> V<sub>A</sub></span><span class="v" id="vaD">-- V</span></div>
             <div class="rm"><span><span class="bdg bdg-b">B</span> V<sub>B</sub></span><span class="v" id="vbD">-- V</span></div>
-            <div class="rm"><span>ΔV = V<sub>B</sub>−V<sub>A</sub></span><span class="v" id="dvD">--</span></div>
             <div class="rm"><span>W<sub>field</sub> = −q·ΔV</span><span class="v" id="wkD">--</span></div>
+            <div class="rm"><span>v<sub>final</sub></span><span class="v" id="vfD">-- m/s</span></div>
           </div>
-          <label style="margin-top:.3rem;font-size:.83rem">
-            Charge q: <span id="qDisp" style="font-weight:700;color:var(--gold-500)">+1 μC</span>
-            <input type="range" id="qSlider" min="-3" max="3" step="1" value="1" oninput="updateQ()">
-          </label>
+          <div style="background:#f9f9f9; padding:.7rem; border-radius:10px; border:1px solid var(--border); margin-bottom:.5rem;">
+            <label style="font-size:.83rem">
+              Charge q: <span id="qDisp" style="font-weight:700;color:var(--gold-500)">+1 μC</span>
+              <input type="range" id="qSlider" min="-10" max="10" step="1" value="1" oninput="updateWorkPhysics()">
+            </label>
+            <label style="margin-top:.4rem;font-size:.83rem">
+              Mass m: <span id="mDisp" style="font-weight:700;color:var(--gold-500)">1.0 kg</span>
+              <input type="range" id="mSlider" min="0.1" max="10" step="0.1" value="1" oninput="updateWorkPhysics()">
+            </label>
+            <label style="margin-top:.4rem;font-size:.83rem">
+              Inital v₀: <span id="v0Disp" style="font-weight:700;color:var(--gold-500)">0 m/s</span>
+              <input type="range" id="v0Slider" min="0" max="10" step="0.5" value="0" oninput="updateWorkPhysics()">
+            </label>
+          </div>
           <div id="wkRes" class="wk-res wk-zer" style="margin-top:.42rem">Set A and B on the field</div>
           <div class="button-row compact" style="margin-top:.38rem">
             <button id="animBtn" onclick="startAnim()">▶ Animate</button>
@@ -347,6 +366,27 @@ footer {
             </div>
           </details>
         </div><!-- /twPanel -->
+
+        <!-- Free Mode -->
+        <div id="tfPanel" class="hidden">
+           <div class="panel-head" style="margin-bottom:.42rem">
+            <div class="kicker">Creative Suite</div>
+            <h2 style="font-size:1rem">Build your Field</h2>
+          </div>
+          <p class="hint" style="font-size:.79rem">Add charges or plates to the canvas, then drag them to rearrange.</p>
+          <div class="button-row compact" style="margin-top:.5rem">
+            <button onclick="addFree('pos')">+ Positive Charge</button>
+            <button onclick="addFree('neg')">− Negative Charge</button>
+            <button class="ghost" onclick="addFree('plate')">Toggle Plate</button>
+          </div>
+          <div id="freeControls" style="margin-top:.8rem; padding-top:.8rem; border-top:1px solid var(--border)">
+             <div class="status" id="freeStatus">Click an electrode to select and edit it.</div>
+             <div id="editTools" class="hidden" style="margin-top:.5rem">
+                <label>Charge Magnitude (Q/q): <input type="number" id="qEdit" step="0.5" onchange="saveFree()"></label>
+                <button onclick="delFree()" style="margin-top:.5rem; background:#cc2222; width:100%">Delete Selected</button>
+             </div>
+          </div>
+        </div>
       </div><!-- /unifiedPanel -->
 
     </div><!-- /narrow -->
@@ -370,22 +410,24 @@ const GW=28, GH=28, PX=24;          // grid units, px/unit
 const CW=GW*PX, CH=GH*PX;           // canvas pixels (672x672)
 
 // ── State ─────────────────────────────────────────────
-let mode='student';                  // student | teacher-field | teacher-work
+let mode='student';                  // student | work | free
 let activeCase=1;
+let electrodes=[];                    // Active electrodes (predefined or free)
+let freeElectrodes=[];                // Electrodes in Free Mode
+let selectedFree=null;               // Electrode index in freeElectrodes
 let probeX=14, probeY=11, probeOn=false, probeV=0;
-let ptA={gx:7,  gy:11};
-let ptB={gx:21, gy:11};
-let drag=null;
-let workQ=1;                         // μC, signed
+let ptA={gx:7,  gy:11}, ptB={gx:21, gy:11};
+let dragTarget=null;                 // ptA | ptB | electrode object
+let workQ=1, workMass=1, workV0=0;   // μC, kg, m/s
 let points=[];
-let animating=false, animT=0, animRAF=null, animStart=null;
+let animating=false, animT=0, animRAF=null, animStart=null, animPath=[];
 let currentTool='probe';
 let drawings=[];
 let customEqs=[];
 let customFLs=[];
 let currentStroke=null;
-const ANIM_MS=2600;
-const CALIB={};
+const ANIM_MS=2800;
+const CALIB_STORE={};
 
 // ── roundRect polyfill ───────────────────────────────
 if(!CanvasRenderingContext2D.prototype.roundRect){
@@ -397,284 +439,298 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
   };
 }
 
-// ── Electrode helpers ─────────────────────────────────
-function barQ(x1,cy,x2,Q,n=20){
-  return Array.from({length:n},(_,i)=>({x:x1+(n===1?.5:i/(n-1))*(x2-x1),y:cy,q:Q/n}));
-}
+// ── Physics Core ─────────────────────────────────────
+function getElectrodes(){ return mode==='free' ? freeElectrodes : electrodes; }
 
-// ── Configs ──────────────────────────────────────────
-const CFG={
-  1:{label:'Case I — Two Circular Electrodes',
-     pos:{type:'circle',cx:14, cy:7, r:1,charges:[{x:14, y:7, q:1}],  calX:14, calY:8.01},
-     neg:{type:'circle',cx:14, cy:21,r:1,charges:[{x:14, y:21,q:-1}], calX:14, calY:19.99}},
-  2:{label:'Case II — Parallel Plate Electrodes',
-     pos:{type:'bar',x1:7, y1:6.5, x2:21,y2:7.5, cy:7, charges:barQ(7,7,21,1,25),  calX:14,calY:7.51},
-     neg:{type:'bar',x1:7, y1:20.5,x2:21,y2:21.5,cy:21,charges:barQ(7,21,21,-1,25),calX:14,calY:20.49}},
-  3:{label:'Case III — Circle and Bar',
-     pos:{type:'circle',cx:14,cy:7, r:1,charges:[{x:14,y:7,q:1}],  calX:14,calY:8.01},
-     neg:{type:'bar',x1:7,y1:20.5,x2:21,y2:21.5,cy:21,charges:barQ(7,21,21,-1,25),calX:14,calY:20.49}}
-};
-
-// ── Physics ──────────────────────────────────────────
-function rawV(gx,gy,cn){
+function rawV(gx,gy, elList){
   let V=0;
-  for(const c of [...CFG[cn].pos.charges,...CFG[cn].neg.charges]){
-    const r=Math.hypot(gx-c.x,gy-c.y);
-    if(r>0.04) V+=c.q/r;
+  for(const el of elList){
+    if(el.type==='circle'){
+       const r=Math.hypot(gx-el.cx, gy-el.cy);
+       if(r>0.05) V += el.labelMagnitude / r;
+    } else if(el.type==='bar'){
+       // Distribute charge on bar for potential calc
+       const n=20;
+       for(let i=0;i<n;i++){
+          const tx = el.x1 + (i/(n-1))*(el.x2-el.x1);
+          const r = Math.hypot(gx-tx, gy-el.cy);
+          if(r>0.08) V += (el.labelMagnitude/n) / r;
+       }
+    }
   }
   return V;
 }
-function cal(cn){
-  if(CALIB[cn]) return CALIB[cn];
-  const {pos,neg}=CFG[cn];
-  return CALIB[cn]={Vp:rawV(pos.calX,pos.calY,cn),Vn:rawV(neg.calX,neg.calY,cn)};
+
+function getCalib(){
+  const list = getElectrodes();
+  const key = JSON.stringify(list);
+  if(CALIB_STORE[key]) return CALIB_STORE[key];
+  
+  // Find typical pos/neg points for calibration
+  let pX=0, pY=0, nX=0, nY=0, pC=0, nC=0;
+  list.forEach(e=>{
+    if(e.labelMagnitude>0){ pX+=e.cx||(e.x1+e.x2)/2; pY+=e.cy; pC++; }
+    else { nX+=e.cx||(e.x1+e.x2)/2; nY+=e.cy; nC++; }
+  });
+  // Simple fallback calibration at electrode surfaces
+  const VrawP = list.find(e=>e.labelMagnitude>0) ? rawV(list.find(e=>e.labelMagnitude>0).cx||list.find(e=>e.labelMagnitude>0).x1+0.1, list.find(e=>e.labelMagnitude>0).cy+1.2, list) : 1;
+  const VrawN = list.find(e=>e.labelMagnitude<0) ? rawV(list.find(e=>e.labelMagnitude<0).cx||list.find(e=>e.labelMagnitude<0).x1+0.1, list.find(e=>e.labelMagnitude<0).cy-1.2, list) : -1;
+  return CALIB_STORE[key] = { Vp: VrawP, Vn: VrawN };
 }
-function dV(gx,gy,cn=activeCase){
-  const {Vp,Vn}=cal(cn);
-  return 6*(rawV(gx,gy,cn)-Vn)/(Vp-Vn);
+
+function dV(gx,gy){
+  const list = getElectrodes();
+  if(!list.length) return 0;
+  const {Vp, Vn} = getCalib();
+  const vPosTarget = +document.getElementById('vPosIn').value;
+  const vNegTarget = +document.getElementById('vNegIn').value;
+  const range = vPosTarget - vNegTarget;
+  if(Math.abs(Vp-Vn)<0.001) return vNegTarget;
+  return vNegTarget + range * (rawV(gx,gy,list)-Vn)/(Vp-Vn);
 }
-function eF(gx,gy,cn=activeCase){
-  const h=.12;
-  return{Ex:-(dV(gx+h,gy,cn)-dV(gx-h,gy,cn))/(2*h),
-         Ey:-(dV(gx,gy+h,cn)-dV(gx,gy-h,cn))/(2*h)};
+
+function eF(gx,gy){
+  const h=.15; 
+  return {Ex:-(dV(gx+h,gy)-dV(gx-h,gy))/(2*h), Ey:-(dV(gx,gy+h)-dV(gx,gy-h))/(2*h)};
 }
-function inEl(gx,gy,cn=activeCase){
-  for(const el of[CFG[cn].pos,CFG[cn].neg]){
-    if(el.type==='circle'&&Math.hypot(gx-el.cx,gy-el.cy)<el.r) return true;
-    if(el.type==='bar'&&gx>=el.x1&&gx<=el.x2&&gy>=el.y1&&gy<=el.y2) return true;
+
+function inEl(gx,gy){
+  for(const el of getElectrodes()){
+    if(el.type==='circle' && Math.hypot(gx-el.cx, gy-el.cy)<el.r) return true;
+    if(el.type==='bar' && gx>=el.x1 && gx<=el.x2 && gy>=el.y1 && gy<=el.y2) return true;
   }
   return false;
 }
-function inNeg(gx,gy,cn=activeCase){
-  const el=CFG[cn].neg,m=.22;
-  if(el.type==='circle') return Math.hypot(gx-el.cx,gy-el.cy)<el.r+m;
-  return gx>=el.x1-m&&gx<=el.x2+m&&gy>=el.y1-m&&gy<=el.y2+m;
+
+function safeV(pt){ return inEl(pt.gx,pt.gy)?3:dV(pt.gx,pt.gy); }
+
+// ── Integration Trajectory ────────────────────────────
+function traceTrajectory(start, targetQ, mass, v0Dir){
+  const path = [{gx:start.gx, gy:start.gy}];
+  let cx=start.gx, cy=start.gy;
+  let vx=0, vy=0;
+  // Initial velocity if set (towards B)
+  if(v0Dir){
+     const ang = Math.atan2(ptB.gy-ptA.gy, ptB.gx-ptA.gx);
+     vx = Math.cos(ang) * workV0;
+     vy = Math.sin(ang) * workV0;
+  }
+  
+  const dt = 0.15;
+  for(let i=0; i<180; i++){
+     const {Ex, Ey} = eF(cx, cy);
+     // F = qE, a = F/m
+     const ax = (targetQ * Ex) / (mass * 5); // scaled for vis
+     const ay = (targetQ * Ey) / (mass * 5);
+     vx += ax * dt; vy += ay * dt;
+     cx += vx * dt; cy += vy * dt;
+     path.push({gx:cx, gy:cy});
+     if(cx<0||cx>GW||cy<0||cy>GH||inEl(cx,cy)) break;
+  }
+  return path;
 }
-function inPos(gx,gy,cn=activeCase){
-  const el=CFG[cn].pos,m=.22;
-  if(el.type==='circle') return Math.hypot(gx-el.cx,gy-el.cy)<el.r+m;
-  return gx>=el.x1-m&&gx<=el.x2+m&&gy>=el.y1-m&&gy<=el.y2+m;
+
+// ── Modes & Predefined ────────────────────────────────
+function setCase(n){
+  activeCase = n;
+  electrodes = [];
+  const vP = +document.getElementById('vPosIn').value;
+  const vN = +document.getElementById('vNegIn').value;
+  if(n===1){
+    electrodes.push({type:'circle', cx:14, cy:7, r:1, labelMagnitude:1});
+    electrodes.push({type:'circle', cx:14, cy:21, r:1, labelMagnitude:-1});
+  } else if(n===2){
+    electrodes.push({type:'bar', x1:7, x2:21, y1:6.5, y2:7.5, cy:7, labelMagnitude:1});
+    electrodes.push({type:'bar', x1:7, x2:21, y1:20.5, y2:21.5, cy:21, labelMagnitude:-1});
+  } else {
+    electrodes.push({type:'circle', cx:14, cy:7, r:1, labelMagnitude:1});
+    electrodes.push({type:'bar', x1:7, x2:21, y1:20.5, y2:21.5, cy:21, labelMagnitude:-1});
+  }
+  document.getElementById('caseHead').textContent = ['Case I — Two Circular Electrodes','Case II — Parallel Plate Electrodes','Case III — Circle and Bar'][n-1];
+  [1,2,3].forEach(i=>document.getElementById('cb'+i).classList.toggle('on',i===n));
+  resetAnim(); redraw();
 }
-function safeV(pt){return inEl(pt.gx,pt.gy)?3:dV(pt.gx,pt.gy);}
 
-// ── Canvas ───────────────────────────────────────────
-const cvs=document.getElementById('fieldCanvas');
-const ctx=cvs.getContext('2d');
-cvs.width=CW; cvs.height=CH;
-const ecvs=document.getElementById('energyCanvas');
-const ectx=ecvs.getContext('2d');
+function updateElectrodeValues(){ setCase(activeCase); }
 
-function g2p(gx,gy){return{px:gx*PX,py:gy*PX};}
-function p2g(px,py){return{gx:px/PX,gy:py/PX};}
+function setAppMode(m){
+  mode = m;
+  document.getElementById('sPanel').classList.toggle('hidden', m !== 'student');
+  document.getElementById('twPanel').classList.toggle('hidden', m !== 'work');
+  document.getElementById('tfPanel').classList.toggle('hidden', m !== 'free');
+  
+  document.getElementById('tsBtn').classList.toggle('active', m === 'student');
+  document.getElementById('twBtn').classList.toggle('active', m === 'work');
+  document.getElementById('tfBtn').classList.toggle('active', m === 'free');
+  
+  if(m==='work') updateWorkPhysics();
+  resetAnim(); redraw();
+}
 
-// ── Mouse events ──────────────────────────────────────
+// ── Interaction ──────────────────────────────────────
 function cPos(e){
   const r=cvs.getBoundingClientRect();
-  return p2g((e.clientX-r.left)*CW/r.width,(e.clientY-r.top)*CH/r.height);
+  return {gx:(e.clientX-r.left)*GW/r.width, gy:(e.clientY-r.top)*GH/r.height};
 }
-cvs.addEventListener('mousemove',e=>{
-  const{gx,gy}=cPos(e);
-  if(currentTool==='probe'||currentTool==='autoEq'||currentTool==='autoFL'){
-    probeX=Math.max(.1,Math.min(GW-.1,gx));
-    probeY=Math.max(.1,Math.min(GH-.1,gy));
-    probeOn=true;
-    if(!inEl(probeX,probeY)) probeV=dV(probeX,probeY);
-  } else {
-    probeOn=false;
+
+cvs.addEventListener('mousedown', e=>{
+  const {gx,gy} = cPos(e);
+  if(mode==='work'){
+    if(Math.hypot(gx-ptA.gx, gy-ptA.gy)<1.5) { dragTarget=ptA; return; }
+    if(Math.hypot(gx-ptB.gx, gy-ptB.gy)<1.5) { dragTarget=ptB; return; }
   }
-  if(drag&&mode==='teacher-work'){drag.gx=Math.max(.1,Math.min(GW-.1,gx));drag.gy=Math.max(.1,Math.min(GH-.1,gy));updateWork();}
+  if(mode==='free'){
+    const hitIdx = freeElectrodes.findIndex(el => {
+       if(el.type==='circle') return Math.hypot(gx-el.cx, gy-el.cy)<el.r+0.5;
+       return gx>=el.x1-0.5 && gx<=el.x2+0.5 && gy>=el.y1-0.5 && gy<=el.y2+0.5;
+    });
+    if(hitIdx!==-1){
+       selectedFree = hitIdx;
+       dragTarget = freeElectrodes[hitIdx];
+       showFreeEdit();
+       redraw();
+       return;
+    }
+  }
+  
+  if(currentTool==='probe') recordPt();
+  else if(currentTool==='autoEq') { customEqs.push({v:probeV, gx, gy}); redraw(); }
+  else if(currentTool==='autoFL') { customFLs.push({gx, gy}); redraw(); }
+  else {
+    const r=cvs.getBoundingClientRect();
+    currentStroke = { type: currentTool, pts: [{px:(e.clientX-r.left)*CW/r.width, py:(e.clientY-r.top)*CH/r.height}] };
+    drawings.push(currentStroke);
+  }
+});
+
+cvs.addEventListener('mousemove', e=>{
+  const {gx,gy} = cPos(e);
+  probeX = Math.max(.1, Math.min(GW-.1, gx));
+  probeY = Math.max(.1, Math.min(GH-.1, gy));
+  probeOn = (currentTool==='probe' || currentTool==='autoEq' || currentTool==='autoFL');
+  if(!inEl(probeX, probeY)) probeV = dV(probeX, probeY);
+  
+  if(dragTarget){
+    if(dragTarget.type==='bar'){
+       const dy = gy - dragTarget.cy;
+       const dx = gx - (dragTarget.x1+dragTarget.x2)/2;
+       dragTarget.x1 += dx; dragTarget.x2 += dx;
+       dragTarget.y1 += dy; dragTarget.y2 += dy; dragTarget.cy += dy;
+    } else if(dragTarget.cx !== undefined){
+       dragTarget.cx = gx; dragTarget.cy = gy;
+    } else {
+       dragTarget.gx = gx; dragTarget.gy = gy;
+    }
+    if(mode==='work') updateWorkPhysics();
+  }
   
   if(currentStroke){
     const r=cvs.getBoundingClientRect();
-    const px = (e.clientX-r.left)*CW/r.width;
-    const py = (e.clientY-r.top)*CH/r.height;
-    currentStroke.pts.push({px,py});
+    currentStroke.pts.push({px:(e.clientX-r.left)*CW/r.width, py:(e.clientY-r.top)*CH/r.height});
   }
   
   redraw(); setVM();
 });
-cvs.addEventListener('mouseleave',()=>{probeOn=false;drag=null;currentStroke=null;redraw();});
-cvs.addEventListener('mousedown',e=>{
-  const{gx,gy}=cPos(e);
-  if(mode==='teacher-work'){
-    if(Math.hypot(gx-ptA.gx,gy-ptA.gy)<1.3){drag=ptA;return;}
-    if(Math.hypot(gx-ptB.gx,gy-ptB.gy)<1.3){drag=ptB;return;}
-  }
-  if(currentTool==='probe'){
-    recordPt();
-  } else if(currentTool==='autoEq'){
-    if(probeOn && !inEl(probeX, probeY)){
-       customEqs.push({v:probeV, gx:probeX, gy:probeY});
-       redraw();
-    }
-  } else if(currentTool==='autoFL'){
-    if(probeOn && !inEl(probeX, probeY)){
-       customFLs.push({gx:probeX, gy:probeY});
-       redraw();
-    }
+
+cvs.addEventListener('mouseup', ()=>{ dragTarget=null; currentStroke=null; redraw(); });
+
+function undoStroke(){ drawings.pop(); customEqs.pop(); customFLs.pop(); redraw(); }
+
+// ── Free Mode Logic ──────────────────────────────────
+function addFree(type){
+  if(type==='pos') freeElectrodes.push({type:'circle', cx:14, cy:14, r:1, labelMagnitude:1});
+  else if(type==='neg') freeElectrodes.push({type:'circle', cx:14, cy:14, r:1, labelMagnitude:-1});
+  else freeElectrodes.push({type:'bar', x1:10, x2:18, y1:13.5, y2:14.5, cy:14, labelMagnitude:2});
+  selectedFree = freeElectrodes.length-1;
+  showFreeEdit(); redraw();
+}
+function showFreeEdit(){
+  const el = freeElectrodes[selectedFree];
+  document.getElementById('editTools').classList.remove('hidden');
+  document.getElementById('qEdit').value = el.labelMagnitude;
+  document.getElementById('freeStatus').textContent = "Editing " + (el.type==='bar'?'Plate':'Charge');
+}
+function saveFree(){
+  if(selectedFree===null) return;
+  freeElectrodes[selectedFree].labelMagnitude = +document.getElementById('qEdit').value;
+  redraw();
+}
+function delFree(){
+  if(selectedFree===null) return;
+  freeElectrodes.splice(selectedFree, 1);
+  selectedFree = null;
+  document.getElementById('editTools').classList.add('hidden');
+  document.getElementById('freeStatus').textContent = "Click an electrode to select and edit it.";
+  redraw();
+}
+
+// ── Work Physics ─────────────────────────────────────
+function updateWorkPhysics(){
+  workQ = +document.getElementById('qSlider').value;
+  workMass = +document.getElementById('mSlider').value;
+  workV0 = +document.getElementById('v0Slider').value;
+  
+  document.getElementById('qDisp').textContent = (workQ>0?'+':'')+workQ+' μC';
+  document.getElementById('mDisp').textContent = workMass.toFixed(1)+' kg';
+  document.getElementById('v0Disp').textContent = workV0+' m/s';
+  
+  const Va = safeV(ptA), Vb = dV(ptB.gx, ptB.gy);
+  const dv = Vb - Va;
+  const Work = -workQ * dv;
+  const KEi = 0.5 * workMass * (workV0**2);
+  const KEf = KEi + Work;
+  
+  document.getElementById('vaD').textContent = Va.toFixed(2) + ' V';
+  document.getElementById('vbD').textContent = Vb.toFixed(2) + ' V';
+  document.getElementById('wkD').textContent = Work.toFixed(2) + ' μJ';
+  
+  const vfEl = document.getElementById('vfD');
+  if(KEf < 0){
+     vfEl.textContent = "Reversed"; vfEl.style.color = "#cc2222";
   } else {
-    const r=cvs.getBoundingClientRect();
-    const px = (e.clientX-r.left)*CW/r.width;
-    const py = (e.clientY-r.top)*CH/r.height;
-    currentStroke = { type: currentTool, pts: [{px, py}] };
-    drawings.push(currentStroke);
+     const vf = Math.sqrt(2 * KEf / workMass);
+     vfEl.textContent = vf.toFixed(2) + " m/s"; vfEl.style.color = "";
   }
-});
-cvs.addEventListener('mouseup',()=>{drag=null;currentStroke=null;});
-cvs.addEventListener('touchmove',e=>{
-  e.preventDefault();
-  cvs.dispatchEvent(new MouseEvent('mousemove',{clientX:e.touches[0].clientX,clientY:e.touches[0].clientY}));
-},{passive:false});
+  
+  const res = document.getElementById('wkRes');
+  if(Math.abs(Work)<.05){res.className='wk-res wk-zer';res.innerHTML='W ≈ 0 μJ — Equipotential path';}
+  else if(Work>0){res.className='wk-res wk-pos';res.innerHTML=`W = +${Work.toFixed(2)} μJ — Accelerated`;}
+  else{res.className='wk-res wk-neg';res.innerHTML=`W = ${Work.toFixed(2)} μJ — Decelerated`;}
+  
+  drawEBars(KEi, KEf, Work);
+}
+
+function drawEBars(KEi, KEf, Work){
+  ecvs.width = ecvs.offsetWidth; ecvs.height = 110;
+  const ew=ecvs.width, eh=110, ctx=ectx;
+  ctx.fillStyle='#fefefe'; ctx.fillRect(0,0,ew,eh);
+  
+  const maxE = Math.max(Math.abs(KEi), Math.abs(KEf), 5);
+  const sc = (eh*0.6)/maxE, base=eh*0.75, bw=ew*0.18;
+  
+  function eBar(x, val, col, lab){
+    const h = Math.max(Math.abs(val)*sc, 2);
+    const y = val>=0 ? base-h : base;
+    ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(x,y,bw,h,4); ctx.fill();
+    ctx.fillStyle = '#333'; ctx.font='bold 10px Inter'; ctx.textAlign='center';
+    ctx.fillText(lab, x+bw/2, base+15);
+    ctx.fillText(val.toFixed(1), x+bw/2, y-5);
+  }
+  
+  eBar(ew*0.15, KEi, '#3498db', 'KE initial');
+  eBar(ew*0.6, Math.max(0, KEf), KEf>=KEi?'#27ae60':'#e74c3c', 'KE final');
+}
 
 // ── Color helpers ─────────────────────────────────────
 function vCol(t){
   t=Math.max(0,Math.min(1,t));
   return`rgb(${Math.round(255*Math.max(0,2*t-1))},${Math.round(255*(t<.5?2*t:2-2*t))},${Math.round(255*Math.max(0,1-2*t))})`;
 }
-function arrw(x,y,dx,dy,sz){
-  const a=Math.atan2(dy,dx);
-  ctx.save(); ctx.translate(x,y); ctx.rotate(a);
-  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-sz,-sz*.38); ctx.lineTo(-sz,sz*.38);
-  ctx.closePath(); ctx.fill(); ctx.restore();
-}
-
-// ── Main render ───────────────────────────────────────
-function redraw(){
-  ctx.clearRect(0,0,CW,CH);
-  drawBg();
-  if(document.getElementById('chkHt')?.checked)  drawHeat();
-  if(document.getElementById('chkEq')?.checked)  drawEquip();
-  if(document.getElementById('chkFL')?.checked)  drawFLines();
-  if(document.getElementById('chkArr')?.checked) drawArrows();
-  drawGrid();
-  drawElecs();
-  drawRecordedPts();
-  drawManLines();
-  if(customEqs.length) drawCustomEqs();
-  if(customFLs.length) drawCustomFLs();
-  if(mode==='teacher-work'){drawWPts();if(animating||animT>0)drawParticle();}
-  if(probeOn&&!inEl(probeX,probeY)) drawProbe();
-}
-
-function drawRecordedPts(){
-  ctx.save();
-  for(const pt of points){
-    const {px,py} = g2p(pt.x, pt.y);
-    const col=vCol(pt.v/6);
-    ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2);
-    ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='#123140';
-    ctx.font='10px IBM Plex Sans,sans-serif'; ctx.textAlign='center';
-    ctx.fillText(pt.v+'V', px, py-8);
-  }
-  ctx.restore();
-}
-
-function drawManLines() {
-   ctx.save();
-   for(const stroke of drawings){
-      ctx.beginPath();
-      for(let i=0; i<stroke.pts.length; i++){
-         const pt = stroke.pts[i];
-         if(i===0) ctx.moveTo(pt.px, pt.py);
-         else ctx.lineTo(pt.px, pt.py);
-      }
-      ctx.strokeStyle = stroke.type === 'drawEq' ? '#27ae60' : '#2980b9';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-   }
-   ctx.restore();
-}
-
-function drawBg(){
-  ctx.fillStyle='#f8f5ed';
-  ctx.fillRect(0,0,CW,CH);
-}
-
-function drawGrid(){
-  for(let x=0;x<=GW;x++){
-    const maj=x%5===0;
-    ctx.strokeStyle=(maj?'rgba(70,100,150,.35)':'rgba(70,100,150,.1)');
-    ctx.lineWidth=maj?.8:.4;
-    ctx.beginPath();ctx.moveTo(x*PX,0);ctx.lineTo(x*PX,CH);ctx.stroke();
-  }
-  for(let y=0;y<=GH;y++){
-    const maj=y%5===0;
-    ctx.strokeStyle=(maj?'rgba(70,100,150,.35)':'rgba(70,100,150,.1)');
-    ctx.lineWidth=maj?.8:.4;
-    ctx.beginPath();ctx.moveTo(0,y*PX);ctx.lineTo(CW,y*PX);ctx.stroke();
-  }
-  ctx.fillStyle='rgba(65,95,140,.55)';
-  ctx.font='10px IBM Plex Sans,sans-serif'; ctx.textAlign='center';
-  for(let x=0;x<=GW;x+=5) ctx.fillText(x,x*PX,CH-2);
-  ctx.textAlign='right';
-  for(let y=0;y<=GH;y+=5) ctx.fillText(y,16,y*PX+4);
-  ctx.fillStyle='rgba(65,95,140,.6)';
-  ctx.textAlign='center'; ctx.fillText('X (cm)',CW/2,CH-1);
-}
-
-function drawElecs(){
-  const{pos,neg}=CFG[activeCase];
-  drawEl(pos,true); drawEl(neg,false);
-}
-function drawEl(el,isP){
-  const fill=isP?'#ffe8e8':'#e8eeff';
-  const strk=isP?'#cc2222':'#2244cc';
-  const txt =isP?'#cc0000':'#0033cc';
-  const sym =isP?'+':'−';
-  ctx.save();
-  if(el.type==='circle'){
-    const{px,py}=g2p(el.cx,el.cy); const rp=el.r*PX;
-    const gr=ctx.createRadialGradient(px,py,rp*.2,px,py,rp*2.2);
-    gr.addColorStop(0,isP?'rgba(255,80,80,.16)':'rgba(80,80,255,.16)'); gr.addColorStop(1,'transparent');
-    ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,rp*2.2,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px,py,rp,0,Math.PI*2);
-    ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=strk; ctx.lineWidth=2.5; ctx.stroke();
-    ctx.fillStyle=txt; ctx.font=`bold ${Math.round(rp*.95)}px IBM Plex Sans,sans-serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(sym,px,py);
-  } else {
-    const{px:bx,py:by}=g2p(el.x1,el.y1); const bw=(el.x2-el.x1)*PX,bh=(el.y2-el.y1)*PX;
-    const ey=isP?by+bh:by;
-    const gr=ctx.createLinearGradient(bx,ey-25,bx,ey+25);
-    gr.addColorStop(0,isP?'rgba(255,80,80,.14)':'transparent');
-    gr.addColorStop(1,isP?'transparent':'rgba(80,80,255,.14)');
-    ctx.fillStyle=gr; ctx.fillRect(bx,by-30,bw,bh+60);
-    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,6);
-    ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=strk; ctx.lineWidth=2.5; ctx.stroke();
-    ctx.fillStyle=txt; ctx.font=`bold ${Math.min(Math.round(bh*.68),24)}px IBM Plex Sans,sans-serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(sym,bx+bw/2,by+bh/2);
-  }
-  ctx.restore();
-}
-
-function drawProbe(){
-  const{px,py}=g2p(probeX,probeY);
-  const t=Math.max(0,Math.min(1,probeV/6)); const col=vCol(t);
-  ctx.save();
-  const gr=ctx.createRadialGradient(px,py,3,px,py,20);
-  gr.addColorStop(0,col.replace('rgb','rgba').replace(')',',0.45)')); gr.addColorStop(1,'transparent');
-  ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,20,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2);
-  ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
-  ctx.strokeStyle=col; ctx.lineWidth=1; ctx.setLineDash([3,3]);
-  for(const[x1,y1,x2,y2] of[[px-17,py,px-9,py],[px+9,py,px+17,py],[px,py-17,px,py-9],[px,py+9,px,py+17]]){
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-  }
-  ctx.setLineDash([]);
-  const vs=probeV.toFixed(2)+' V', cs=`(${probeX.toFixed(1)}, ${probeY.toFixed(1)})`;
-  const tw=Math.max(ctx.measureText(vs).width,ctx.measureText(cs).width)+16;
-  const tx=Math.min(px+14,CW-tw-6), ty=Math.max(4,py-48);
-  ctx.fillStyle='rgba(10,15,25,.9)'; ctx.beginPath(); ctx.roundRect(tx,ty,tw,40,6); ctx.fill();
-  ctx.textAlign='left'; ctx.textBaseline='middle';
-  ctx.fillStyle='#fff'; ctx.font='bold 13px IBM Plex Sans,sans-serif'; ctx.fillText(vs,tx+8,ty+12);
-  ctx.fillStyle='rgba(170,205,225,.88)'; ctx.font='10px IBM Plex Sans,sans-serif'; ctx.fillText(cs,tx+8,ty+28);
-  ctx.restore();
-}
 
 // ── Heatmap ───────────────────────────────────────────
 function drawHeat(){
-  const res=5, cols=Math.ceil(CW/res), rows=Math.ceil(CH/res);
-  ctx.save(); ctx.globalAlpha=.28;
+  const res=6, cols=Math.ceil(CW/res), rows=Math.ceil(CH/res);
+  ctx.save(); ctx.globalAlpha=.3;
   for(let c=0;c<cols;c++) for(let r=0;r<rows;r++){
     const gx=(c*res+res/2)/PX, gy=(r*res+res/2)/PX;
     if(inEl(gx,gy)) continue;
@@ -685,43 +741,17 @@ function drawHeat(){
 }
 
 // ── Equipotentials (Marching Squares) ─────────────────
-let eqCache={case:0, vg:null};
-function getVG(){
-  if(eqCache.case===activeCase) return eqCache.vg;
-  const RX=84, RY=Math.round(84*GH/GW);
+function drawEquip(){
+  const levels = [1,2,3,4,5];
+  const RX=70, RY=70;
   const vg=new Float32Array(RX*RY);
   for(let j=0;j<RY;j++) for(let i=0;i<RX;i++){
     const gx=(i/(RX-1))*GW, gy=(j/(RY-1))*GH;
     vg[j*RX+i]=inEl(gx,gy)?NaN:dV(gx,gy);
   }
-  eqCache={case:activeCase, vg};
-  return vg;
-}
 
-function drawEquip(){
-  drawEquipLevels([1,2,3,4,5], true);
-}
-
-function drawCustomEqs(){
-  drawEquipLevels(customEqs.map(c=>c.v), false);
-  ctx.save();
-  for(const c of customEqs){
-    const {px,py}=g2p(c.gx,c.gy);
-    const col=vCol(c.v/6);
-    const lab=c.v.toFixed(2)+' V', tw=ctx.measureText(lab).width+10;
-    ctx.fillStyle='rgba(255,255,255,.92)'; ctx.strokeStyle=col; ctx.lineWidth=1.2;
-    ctx.beginPath(); ctx.roundRect(px-tw/2,py-9,tw,18,4); ctx.fill(); ctx.stroke();
-    ctx.fillStyle=col; ctx.font='bold 11px IBM Plex Sans,sans-serif';
-    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(lab,px,py);
-  }
-  ctx.restore();
-}
-
-function drawEquipLevels(levels, isStd){
-  const vg=getVG();
-  const RX=84, RY=Math.round(84*GH/GW);
   for(const lv of levels){
-    ctx.strokeStyle=vCol(lv/6); ctx.lineWidth=2.2; ctx.beginPath();
+    ctx.strokeStyle=vCol(lv/6); ctx.lineWidth=2; ctx.beginPath();
     for(let j=0;j<RY-1;j++) for(let i=0;i<RX-1;i++){
       const v00=vg[j*RX+i],v10=vg[j*RX+i+1],v01=vg[(j+1)*RX+i],v11=vg[(j+1)*RX+i+1];
       if([v00,v10,v01,v11].some(isNaN)) continue;
@@ -735,347 +765,197 @@ function drawEquipLevels(levels, isStd){
       if(tB!==null) pts.push({x:x0+tB*(x1-x0),y:y1});
       if(tL!==null) pts.push({x:x0,            y:y0+tL*(y1-y0)});
       if(pts.length>=2){ctx.moveTo(pts[0].x,pts[0].y);ctx.lineTo(pts[1].x,pts[1].y);}
-      if(pts.length===4){ctx.moveTo(pts[2].x,pts[2].y);ctx.lineTo(pts[3].x,pts[3].y);}
     }
     ctx.stroke();
-    if(isStd) eqLabel(lv);
-  }
-}
-function eqLabel(lv){
-  const sx=GW*.8, step=.28;
-  for(let gy=1.5;gy<GH-1.5;gy+=step){
-    if(inEl(sx,gy)||inEl(sx,gy+step)) continue;
-    const v1=dV(sx,gy),v2=dV(sx,gy+step);
-    if((v1-lv)*(v2-lv)<0){
-      const iy=gy+step*(lv-v1)/(v2-v1);
-      const{px,py}=g2p(sx,iy); const col=vCol(lv/6);
-      const lab=lv+' V', tw=ctx.measureText(lab).width+10;
-      ctx.save();
-      ctx.fillStyle='rgba(255,255,255,.92)'; ctx.strokeStyle=col; ctx.lineWidth=1.2;
-      ctx.beginPath(); ctx.roundRect(px-tw/2,py-9,tw,18,4); ctx.fill(); ctx.stroke();
-      ctx.fillStyle=col; ctx.font='bold 11px IBM Plex Sans,sans-serif';
-      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(lab,px,py);
-      ctx.restore(); break;
-    }
   }
 }
 
 // ── Field Lines ───────────────────────────────────────
 function drawFLines(){
-  const col='rgba(25,35,145,.68)';
-  ctx.strokeStyle=ctx.fillStyle=col; ctx.lineWidth=1.55;
-  for(const s of seeds(CFG[activeCase].pos)) traceLine(s.gx,s.gy);
-}
-function seeds(el){
-  const n=14;
-  if(el.type==='circle') return Array.from({length:n},(_,i)=>{
-    const a=(i/n)*2*Math.PI+.12;
-    return{gx:el.cx+(el.r+.42)*Math.cos(a),gy:el.cy+(el.r+.42)*Math.sin(a)};
+  const list = getElectrodes();
+  ctx.strokeStyle='rgba(25,35,145,0.7)'; ctx.lineWidth=1.8;
+  list.filter(e=>e.labelMagnitude>0).forEach(source=>{
+     const n = source.type==='circle' ? 14 : 18;
+     for(let i=0;i<n;i++){
+        let sx, sy;
+        if(source.type==='circle'){
+           const a = (i/n)*Math.PI*2;
+           sx = source.cx + source.r*1.1*Math.cos(a);
+           sy = source.cy + source.r*1.1*Math.sin(a);
+        } else {
+           sx = source.x1 + (i/n)*(source.x2-source.x1);
+           sy = source.y2 + 0.2;
+        }
+        traceLine(sx, sy);
+     }
   });
-  return Array.from({length:n},(_,i)=>{
-    const t=(i+.5)/n;
-    return{gx:el.x1+t*(el.x2-el.x1),gy:el.y2+.38};
-  });
 }
-function traceLine(sgx,sgy){
-  let gx=sgx,gy=sgy; const step=.2,MAX=450;
-  ctx.beginPath(); ctx.moveTo(gx*PX,gy*PX);
-  const aPts=[];
-  for(let s=0;s<MAX;s++){
-    const{Ex,Ey}=eF(gx,gy); const mag=Math.hypot(Ex,Ey);
-    if(mag<.001) break;
-    const nx=Ex/mag,ny=Ey/mag;
-    const ngx=gx+step*nx,ngy=gy+step*ny;
-    if(ngx<.3||ngx>GW-.3||ngy<.3||ngy>GH-.3) break;
-    if(inNeg(ngx,ngy)) break;
-    if(s>3&&inPos(ngx,ngy)) break;
-    gx=ngx; gy=ngy; ctx.lineTo(gx*PX,gy*PX);
-    if(s%38===37) aPts.push({x:gx*PX,y:gy*PX,nx,ny});
+
+function traceLine(sx, sy){
+  let cx=sx, cy=sy; const step=0.22;
+  ctx.beginPath(); ctx.moveTo(cx*PX, cy*PX);
+  for(let s=0; s<450; s++){
+     const {Ex, Ey} = eF(cx, cy);
+     const m = Math.hypot(Ex, Ey);
+     if(m<0.01) break;
+     cx += (Ex/m)*step; cy += (Ey/m)*step;
+     ctx.lineTo(cx*PX, cy*PX);
+     if(cx<0||cx>GW||cy<0||cy>GH||inEl(cx,cy)) break;
+     if(s%40===39) arrw(cx*PX, cy*PX, Ex, Ey, 10); 
   }
   ctx.stroke();
-  for(const ap of aPts) arrw(ap.x,ap.y,ap.nx,ap.ny,6);
 }
 
-function drawCustomFLs(){
-  const col='rgba(25,35,145,.9)';
-  ctx.strokeStyle=ctx.fillStyle=col; ctx.lineWidth=2;
-  for(const fl of customFLs) traceBidirectional(fl.gx, fl.gy);
+function arrw(x,y,dx,dy,sz){
+  const a = Math.atan2(dy,dx);
+  ctx.save(); ctx.translate(x,y); ctx.rotate(a);
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-sz, -sz*0.4); ctx.lineTo(-sz, sz*0.4); ctx.fill();
+  ctx.restore();
 }
 
-function traceBidirectional(sgx, sgy){
-  const step=.2,MAX=450;
-  const aPts=[];
-  function trace(dir){
-    let gx=sgx,gy=sgy;
-    for(let s=0;s<MAX;s++){
-      const{Ex,Ey}=eF(gx,gy); const mag=Math.hypot(Ex,Ey);
-      if(mag<.001) break;
-      const nx=(Ex/mag)*dir,ny=(Ey/mag)*dir;
-      const ngx=gx+step*nx,ngy=gy+step*ny;
-      if(ngx<.3||ngx>GW-.3||ngy<.3||ngy>GH-.3) break;
-      if(inNeg(ngx,ngy)||inPos(ngx,ngy)) break;
-      ctx.lineTo(ngx*PX,ngy*PX);
-      gx=ngx; gy=ngy;
-      if(dir===1 && s%38===37) aPts.push({x:gx*PX,y:gy*PX,nx:Ex/mag,ny:Ey/mag});
-    }
-  }
-  ctx.beginPath();
-  ctx.moveTo(sgx*PX,sgy*PX);
-  trace(1);
-  ctx.moveTo(sgx*PX,sgy*PX);
-  trace(-1);
-  ctx.stroke();
-  for(const ap of aPts) arrw(ap.x,ap.y,ap.nx,ap.ny,6);
-}
-
-// ── Arrow grid ────────────────────────────────────────
 function drawArrows(){
-  const col='rgba(35,35,165,.5)';
-  ctx.strokeStyle=ctx.fillStyle=col; ctx.lineWidth=1;
-  const sp=2.5;
+  ctx.fillStyle='rgba(35,35,165,0.45)';
+  const sp=2.8;
   for(let gx=sp;gx<GW;gx+=sp) for(let gy=sp;gy<GH;gy+=sp){
     if(inEl(gx,gy)) continue;
     const{Ex,Ey}=eF(gx,gy); const mag=Math.hypot(Ex,Ey);
-    if(mag<.01) continue;
-    const nx=Ex/mag,ny=Ey/mag,len=13;
+    if(mag<.02) continue;
+    const nx=Ex/mag,ny=Ey/mag,len=14;
     const{px,py}=g2p(gx,gy);
     ctx.beginPath(); ctx.moveTo(px-nx*len/2,py-ny*len/2); ctx.lineTo(px+nx*len/2,py+ny*len/2); ctx.stroke();
-    arrw(px+nx*len/2,py+ny*len/2,nx,ny,5);
+    arrw(px+nx*len/2,py+ny*len/2,nx,ny,6);
   }
 }
 
-// ── Work demo points ──────────────────────────────────
-function drawWPts(){
-  drawWPt(ptA,'A','#e67e22'); drawWPt(ptB,'B','#8e44ad');
-  const{px:ax,py:ay}=g2p(ptA.gx,ptA.gy),{px:bx,py:by}=g2p(ptB.gx,ptB.gy);
-  ctx.save(); ctx.strokeStyle='rgba(150,150,185,.42)'; ctx.lineWidth=1.2;
-  ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
-  ctx.setLineDash([]); ctx.restore();
-}
-function drawWPt(pt,lab,col){
-  const{px,py}=g2p(pt.gx,pt.gy),V=inEl(pt.gx,pt.gy)?null:dV(pt.gx,pt.gy);
-  ctx.save();
-  const gr=ctx.createRadialGradient(px,py,4,px,py,22);
-  gr.addColorStop(0,col+'aa'); gr.addColorStop(1,'transparent');
-  ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,22,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(px,py,10,0,Math.PI*2);
-  ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle='#fff'; ctx.font='bold 12px IBM Plex Sans,sans-serif';
-  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(lab,px,py);
-  if(V!==null){
-    const vl=V.toFixed(2)+' V', tw=ctx.measureText(vl).width+12;
-    ctx.fillStyle='rgba(10,15,25,.9)'; ctx.beginPath(); ctx.roundRect(px-tw/2,py-31,tw,18,4); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='bold 11px IBM Plex Sans,sans-serif'; ctx.fillText(vl,px,py-22);
+// ── Rendering & Animation ────────────────────────────
+function redraw(){
+  ctx.clearRect(0,0,CW,CH);
+  ctx.fillStyle='#f8f5ed'; ctx.fillRect(0,0,CW,CH);
+  
+  if(document.getElementById('chkHt').checked) drawHeat();
+  if(document.getElementById('chkEq').checked) drawEquip();
+  if(document.getElementById('chkFL').checked) drawFLines();
+  if(document.getElementById('chkArr').checked) drawArrows();
+  
+  // Grid
+  ctx.lineWidth=0.5; ctx.strokeStyle='rgba(0,0,0,0.06)';
+  for(let i=0;i<=GW;i+=5){ 
+     ctx.beginPath(); ctx.moveTo(i*PX,0); ctx.lineTo(i*PX,CH); ctx.stroke(); 
+     ctx.beginPath(); ctx.moveTo(0,i*PX); ctx.lineTo(CW,i*PX); ctx.stroke(); 
   }
-  ctx.restore();
-}
-
-// ── Animated particle ─────────────────────────────────
-function drawParticle(){
-  const t=animT,gx=ptA.gx+t*(ptB.gx-ptA.gx),gy=ptA.gy+t*(ptB.gy-ptA.gy);
-  const{px,py}=g2p(gx,gy);
-  const W=workQ*(safeV(ptA)-safeV(ptB));
-  const gc=W>0.05?'#00ff88':W<-0.05?'#ff4455':'#aaaacc';
-  ctx.save();
-  for(let i=10;i>=0;i--){
-    const tt=Math.max(0,t-i*.025);
-    const tx=ptA.gx+tt*(ptB.gx-ptA.gx),ty=ptA.gy+tt*(ptB.gy-ptA.gy);
-    const{px:tpx,py:tpy}=g2p(tx,ty);
-    const alpha=(1-i/10)*.32;
-    ctx.beginPath(); ctx.arc(tpx,tpy,4+(10-i)*.28,0,Math.PI*2);
-    ctx.fillStyle=gc+Math.round(alpha*255).toString(16).padStart(2,'0'); ctx.fill();
-  }
-  const gr=ctx.createRadialGradient(px,py,2,px,py,20);
-  gr.addColorStop(0,gc+'cc'); gr.addColorStop(1,'transparent');
-  ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(px,py,20,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(px,py,8,0,Math.PI*2);
-  ctx.fillStyle=gc; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle=workQ>0?'#001':'#fff'; ctx.font='bold 10px IBM Plex Sans,sans-serif';
-  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(workQ>0?'+':'−',px,py);
-  ctx.restore();
-}
-
-// ═══════════════════════════════════════════════════════
-// UI
-// ═══════════════════════════════════════════════════════
-
-function setTool(t){
-  currentTool = t;
-  const toolBtns = ['toolProbe', 'toolAutoEq', 'toolAutoFL', 'toolDrawEq', 'toolDrawFL'];
-  toolBtns.forEach(id => {
-    const btn = document.getElementById(id);
-    if(btn) btn.className = (id === 'tool' + t.charAt(0).toUpperCase() + t.slice(1)) ? '' : 'ghost';
+  
+  getElectrodes().forEach((el, idx)=>{
+     const isSelected = (mode==='free' && selectedFree === idx);
+     drawEl(el, el.labelMagnitude > 0, isSelected);
   });
-  // Manual override for probe
-  document.getElementById('toolProbe').className = (t === 'probe') ? '' : 'ghost';
-
-  const hint = document.getElementById('toolHint');
-  if(t==='probe') hint.innerHTML = 'Hover to read voltage. Click the canvas to record a point.';
-  else if(t==='autoEq') hint.innerHTML = 'Click anywhere to instantly trace the equipotential line for that exact voltage.';
-  else if(t==='autoFL') hint.innerHTML = 'Click anywhere to trace the electric field line passing through that point.';
-  else if(t==='drawEq') hint.innerHTML = 'Click and drag on the canvas to manually draw an equipotential line.';
-  else if(t==='drawFL') hint.innerHTML = 'Click and drag on the canvas to manually draw a field line.';
-}
-function clearDrawings(){ drawings=[]; customEqs=[]; customFLs=[]; redraw(); }
-
-function downloadImage(){
-  const a=document.createElement('a');
-  a.href=cvs.toDataURL('image/png');
-  a.download=`electric-fields-${CFG[activeCase].label.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-function setVM(){
-  const el=document.getElementById('vmVal');
-  if(probeOn&&!inEl(probeX,probeY)){
-    el.textContent=probeV.toFixed(2);
-    el.style.color=probeV<.5?'#6699ff':probeV>5.5?'#ff7733':'#00ff88';
-  } else {el.textContent='--.--';el.style.color='#00ff88';}
-}
-
-function setCase(n){
-  activeCase=n;
-  document.getElementById('caseHead').textContent=CFG[n].label;
-  [1,2,3].forEach(i=>document.getElementById('cb'+i).classList.toggle('on',i===n));
-  resetAnim();
-  if(mode==='teacher-work') updateWork();
-  redraw();
-}
-
-function recordPt(){
-  if(!probeOn||inEl(probeX,probeY)) return;
-  points.push({n:points.length+1,x:probeX.toFixed(1),y:probeY.toFixed(1),v:probeV.toFixed(2)});
-  renderTable();
-  const cvs=document.getElementById('fieldCanvas');
-  cvs.style.borderColor='#00ff88'; cvs.style.boxShadow='0 0 12px rgba(0,255,136,0.6)';
-  setTimeout(()=>{cvs.style.borderColor='';cvs.style.boxShadow='';},420);
-}
-function clearPts(){points=[];renderTable();}
-function renderTable(){
-  const tb=document.getElementById('dBody'),cnt=document.getElementById('ptCnt');
-  cnt.textContent=points.length+' pt'+(points.length!==1?'s':'');
-  if(!points.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text-300);padding:.55rem;font-size:.79rem">No points yet</td></tr>';return;}
-  tb.innerHTML=points.map(p=>`<tr><td>${p.n}</td><td>${p.x}</td><td>${p.y}</td><td><b>${p.v}</b></td></tr>`).join('');
-  document.querySelector('.data-scroll').scrollTop=9999;
-}
-
-// ── App Mode switching ─────────────────────────────────
-function setAppMode(m){
-  mode = m === 'student' ? 'student' : 'teacher-work';
   
-  // Update UI visibility
-  document.getElementById('sPanel').classList.toggle('hidden', m !== 'student');
-  document.getElementById('twPanel').classList.toggle('hidden', m !== 'work');
+  drawRecordedPts();
+  drawManLines();
+  if(customEqs.length) drawCustomEqs();
+  if(customFLs.length) drawCustomFLs();
   
-  // Update tab active states
-  document.getElementById('tsBtn').classList.toggle('active', m === 'student');
-  document.getElementById('twBtn').classList.toggle('active', m === 'work');
-  
-  if(m === 'work') updateWork();
-  resetAnim();
-  redraw();
+  if(mode==='work'){
+    drawWPts();
+    if(animating || animT > 0) drawAnimatedTrajectory();
+  }
+  if(probeOn && !inEl(probeX, probeY)) drawProbe();
 }
 
-// ── Work Demo ─────────────────────────────────────────
-function updateQ(){
-  const v=+document.getElementById('qSlider').value;
-  workQ=v===0?1:v;
-  document.getElementById('qDisp').textContent=(workQ>0?'+':'')+workQ+' μC';
-  updateWork();
-}
-function updateWork(){
-  if(mode!=='teacher-work') return;
-  const Va=safeV(ptA),Vb=safeV(ptB),dv=Vb-Va,W=-workQ*dv;
-  document.getElementById('vaD').textContent=Va.toFixed(2)+' V';
-  document.getElementById('vbD').textContent=Vb.toFixed(2)+' V';
-  document.getElementById('dvD').textContent=dv.toFixed(2)+' V';
-  document.getElementById('wkD').textContent=W.toFixed(2)+' μJ';
-  const res=document.getElementById('wkRes');
-  if(Math.abs(W)<.05){res.className='wk-res wk-zer';res.innerHTML='W ≈ 0 μJ — Points on same equipotential';}
-  else if(W>0){res.className='wk-res wk-pos';res.innerHTML=`W = +${W.toFixed(2)} μJ — Field does work`;}
-  else{res.className='wk-res wk-neg';res.innerHTML=`W = ${W.toFixed(2)} μJ — External work needed`;}
-  drawEBars(Va,Vb,W);
-  updateExplain(Va,Vb,W);
-}
-function updateExplain(Va,Vb,W){
-  const qS=(workQ>0?'+':'')+workQ+' μC',dv=(Vb-Va).toFixed(2);
-  let h=`<b>Moving a ${workQ>0?'positive':'negative'} charge (q = ${qS})</b> from A (${Va.toFixed(2)} V) → B (${Vb.toFixed(2)} V).<br><br>`;
-  h+=`<b>ΔV = V<sub>B</sub> − V<sub>A</sub> = ${dv} V</b><br>`;
-  h+=`<b>W<sub>field</sub> = −q·ΔV = −(${qS})(${dv} V) = ${W.toFixed(2)} μJ</b><br>`;
-  h+=`<b>ΔKE = W<sub>field</sub> = ${W.toFixed(2)} μJ</b><br>`;
-  h+=`<b>ΔPE = −W<sub>field</sub> = ${(-W).toFixed(2)} μJ</b><br><br>`;
-  if(Math.abs(W)<.05)
-    h+='⚪ <b>No net work done.</b> A and B share the same potential. The charge travels freely — this is exactly what an equipotential surface means!';
-  else if(W>0)
-    h+=`🟢 <b>The field accelerates the charge spontaneously</b> — like a ball rolling downhill. PE converts to KE. No external push needed. The system loses ${Math.abs(W).toFixed(2)} μJ of PE and gains the same in KE.`;
-  else
-    h+=`🔴 <b>The charge needs a push.</b> Moving it from A→B is like pushing a ball uphill. An external agent must supply ${Math.abs(W).toFixed(2)} μJ of work. KE decreases (or stays constant if pushed at constant speed) and PE increases.`;
-  document.getElementById('physBox').innerHTML=h;
+function drawEl(el, isP, selected){
+  ctx.save();
+  if(selected) { ctx.shadowBlur=15; ctx.shadowColor='#f1c40f'; }
+  if(el.type==='circle'){
+    const {px,py}=g2p(el.cx, el.cy), r=el.r*PX;
+    ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2);
+    ctx.fillStyle=isP?'#cc2222':'#2244cc'; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='bold 16px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(isP?'+':'−', px, py);
+  } else {
+    const bx=el.x1*PX, by=el.y1*PX, bw=(el.x2-el.x1)*PX, bh=(el.y2-el.y1)*PX;
+    ctx.fillStyle=isP?'#cc2222':'#2244cc'; ctx.fillRect(bx,by,bw,bh);
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.strokeRect(bx,by,bw,bh);
+  }
+  ctx.restore();
 }
 
-// ── Energy Bars ───────────────────────────────────────
-function drawEBars(Va,Vb,W,currFrac){
-  ecvs.width=ecvs.offsetWidth||220; ecvs.height=110;
-  const ew=ecvs.width,eh=110;
-  ectx.fillStyle='#f4f8fd'; ectx.fillRect(0,0,ew,eh);
-  const frac=(currFrac!==undefined)?currFrac:1;
-  const KE0=4,PE0=0,KE1=KE0+W*frac,PE1=-W*frac;
-  const maxE=Math.max(Math.abs(KE0),Math.abs(KE1),Math.abs(PE0),Math.abs(PE1),1);
-  const sc=(eh*.58)/maxE,base=eh*.74,bw=ew*.13,gp=ew*.04;
-  const kCol=W>0.05?'#27ae60':W<-0.05?'#e74c3c':'#2980b9';
-  const pCol=W>0.05?'#8e44ad':W<-0.05?'#d35400':'#e67e22';
-  eBar(ew*.09,base,bw,KE0,sc,'#2980b9','KE');
-  eBar(ew*.09+bw+gp,base,bw,PE0,sc,'#e67e22','PE');
-  ectx.strokeStyle='rgba(0,0,0,.08)';
-  ectx.lineWidth=1; ectx.setLineDash([3,3]);
-  ectx.beginPath(); ectx.moveTo(ew*.5,4); ectx.lineTo(ew*.5,eh-4); ectx.stroke();
-  ectx.setLineDash([]);
-  eBar(ew*.56,base,bw,KE1,sc,kCol,"KE'");
-  eBar(ew*.56+bw+gp,base,bw,PE1,sc,pCol,"PE'");
-  ectx.fillStyle='rgba(60,85,130,.55)';
-  ectx.font='7.5px IBM Plex Sans,sans-serif'; ectx.textAlign='center';
-  ectx.fillText('BEFORE A',ew*.24,eh-2); ectx.fillText('AFTER B',ew*.72,eh-2);
-}
-function eBar(x,base,w,val,sc,col,lab){
-  const h=Math.max(Math.abs(val)*sc,2),y=val>=0?base-h:base;
-  ectx.fillStyle=col; ectx.beginPath(); ectx.roundRect(x,y,w,h,[3,3,0,0]); ectx.fill();
-  ectx.fillStyle='#333'; ectx.font='7px IBM Plex Sans,sans-serif'; ectx.textAlign='center';
-  ectx.fillText(val.toFixed(1),x+w/2,val>=0?y-2:y+h+9);
-  ectx.fillStyle='#555'; ectx.font='bold 7.5px IBM Plex Sans,sans-serif';
-  ectx.fillText(lab,x+w/2,base+12);
-}
-
-// ── Animation ─────────────────────────────────────────
 function startAnim(){
   if(animating) return;
   animating=true; animT=0; animStart=null;
-  const Va=safeV(ptA),Vb=safeV(ptB),W=-workQ*(Vb-Va);
+  animPath = traceTrajectory(ptA, workQ, workMass, workV0 >= 0);
   function loop(ts){
-    if(!animStart) animStart=ts;
-    const raw=Math.min(1,(ts-animStart)/ANIM_MS);
-    animT=W>0.05?raw*raw:W<-0.05?raw*(2-raw):raw;
-    const frac=(safeV(ptA)-dV(ptA.gx+animT*(ptB.gx-ptA.gx),ptA.gy+animT*(ptB.gy-ptA.gy)))/(Va-Vb||.001);
-    drawEBars(Va,Vb,W,Math.max(0,Math.min(1,frac)));
-    redraw();
-    if(raw<1) animRAF=requestAnimationFrame(loop);
-    else{animT=1;animating=false;redraw();drawEBars(Va,Vb,W,1);}
+     if(!animStart) animStart=ts;
+     animT = Math.min(1, (ts-animStart)/ANIM_MS);
+     redraw();
+     if(animT<1) animRAF = requestAnimationFrame(loop);
+     else { animating=false; }
   }
-  animRAF=requestAnimationFrame(loop);
+  animRAF = requestAnimationFrame(loop);
 }
-function resetAnim(){
-  if(animRAF){cancelAnimationFrame(animRAF);animRAF=null;}
-  animating=false; animT=0; redraw();
+
+function drawAnimatedTrajectory(){
+  const idx = Math.floor(animT * (animPath.length-1));
+  const p = animPath[idx];
+  const {px,py} = g2p(p.gx, p.gy);
+  
+  ctx.beginPath(); ctx.moveTo(animPath[0].gx*PX, animPath[0].gy*PX);
+  for(let i=0; i<=idx; i++) ctx.lineTo(animPath[i].gx*PX, animPath[i].gy*PX);
+  ctx.strokeStyle='rgba(39, 174, 96, 0.4)'; ctx.lineWidth=3; ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
+  
+  ctx.beginPath(); ctx.arc(px,py,9,0,Math.PI*2);
+  ctx.fillStyle=workQ>0?'#e67e22':'#2980b9'; ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='bold 10px Inter'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(workQ>0?'+':'−', px, py);
+}
+
+// ── Helpers & UI ──────────────────────────────────────
+function resetAnim(){ if(animRAF) cancelAnimationFrame(animRAF); animating=false; animT=0; redraw(); }
+function g2p(gx,gy) { return {px:gx*PX, py:gy*PX}; }
+function p2g(px,py) { return {gx:px/PX, gy:py/PX}; }
+function setTool(t){ currentTool=t; redraw(); }
+function recordPt(){ 
+  const v = probeV.toFixed(2);
+  points.push({n:points.length+1, x:probeX.toFixed(1), y:probeY.toFixed(1), v}); 
+  renderTable(); 
+}
+function renderTable(){
+  const tb=document.getElementById('dBody');
+  tb.innerHTML = points.map(p=>`<tr><td>${p.n}</td><td>${p.x}</td><td>${p.y}</td><td><b>${p.v}</b></td></tr>`).join('');
+}
+function clearPts(){ points=[]; renderTable(); }
+function clearDrawings(){ drawings=[]; customEqs=[]; customFLs=[]; redraw(); }
+function downloadImage(){ const a=document.createElement('a'); a.href=cvs.toDataURL(); a.download='field.png'; a.click(); }
+function drawRecordedPts(){
+  points.forEach(p=>{
+    const {px,py} = g2p(+p.x, +p.y);
+    ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2); ctx.fillStyle='#333'; ctx.fill();
+  });
+}
+function drawManLines(){
+  drawings.forEach(s=>{
+    ctx.beginPath(); s.pts.forEach((p,i)=>i===0?ctx.moveTo(p.px,p.py):ctx.lineTo(p.px,p.py));
+    ctx.strokeStyle=s.type==='drawEq'?'#27ae60':'#2980b9'; ctx.lineWidth=3; ctx.stroke();
+  });
+}
+function drawCustomEqs(){ customEqs.forEach(c=>{ const {px,py}=g2p(c.gx,c.gy); ctx.fillText(c.v.toFixed(1)+'V', px, py); });}
+function drawCustomFLs(){ customFLs.forEach(c=>traceLine(c.gx, c.gy)); }
+function drawWPts(){
+  const drawP = (p, label) => {
+    const {px,py} = g2p(p.gx, p.gy);
+    ctx.beginPath(); ctx.arc(px,py,10,0,Math.PI*2); ctx.fillStyle='#555'; ctx.fill();
+    ctx.fillStyle='#fff'; ctx.fillText(label, px-4, py+4);
+  };
+  drawP(ptA, 'A'); drawP(ptB, 'B');
+}
+function drawProbe(){
+  const {px,py} = g2p(probeX, probeY);
+  ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2); ctx.strokeStyle='#000'; ctx.stroke();
 }
 
 // ── Init ──────────────────────────────────────────────
-function init(){
-  [1,2,3].forEach(cn=>cal(cn));   // pre-calibrate all cases
-  new ResizeObserver(()=>{if(mode==='teacher-work')updateWork();}).observe(ecvs);
-  renderTable(); setCase(1); redraw();
-}
-init();
+setCase(1);
+setAppMode('student');
 </script>
 </body>
 </html>
