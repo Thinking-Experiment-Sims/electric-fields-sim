@@ -442,7 +442,13 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
 // ── Canvas ───────────────────────────────────────────
 const cvs = document.getElementById('fieldCanvas');
 const ctx = cvs.getContext('2d');
-cvs.width = CW; cvs.height = CH;
+const dpr = window.devicePixelRatio || 1;
+cvs.width = CW * dpr;
+cvs.height = CH * dpr;
+cvs.style.width = CW + "px";
+cvs.style.height = CH + "px";
+ctx.scale(dpr, dpr);
+
 const ecvs = document.getElementById('energyCanvas');
 const ectx = ecvs.getContext('2d');
 
@@ -543,6 +549,13 @@ function traceTrajectory(start, targetQ, mass, v0Dir){
 function setCase(n){
   activeCase = n;
   electrodes = [];
+  drawings = [];
+  customEqs = [];
+  customFLs = [];
+  points = [];
+  document.getElementById('dBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-300);padding:.55rem;font-size:.79rem">No points yet</td></tr>';
+  document.getElementById('ptCnt').textContent = '0 pts';
+  
   const vP = document.getElementById('vPosIn') ? +document.getElementById('vPosIn').value : 6;
   const vN = document.getElementById('vNegIn') ? +document.getElementById('vNegIn').value : 0;
   if(n===1){
@@ -726,9 +739,14 @@ function updateWorkPhysics(){
 }
 
 function drawEBars(KEi, KEf, Work){
-  ecvs.width = ecvs.offsetWidth; ecvs.height = 110;
-  const ew=ecvs.width, eh=110, ctx=ectx;
-  ctx.fillStyle='#fefefe'; ctx.fillRect(0,0,ew,eh);
+  const ew = ecvs.offsetWidth || 220; 
+  const eh = 110;
+  ecvs.width = ew * dpr; 
+  ecvs.height = eh * dpr;
+  ecvs.style.width = ew + "px";
+  ecvs.style.height = eh + "px";
+  ectx.scale(dpr, dpr);
+  ectx.fillStyle='#fefefe'; ectx.fillRect(0,0,ew,eh);
   
   const maxE = Math.max(Math.abs(KEi), Math.abs(KEf), 5);
   const sc = (eh*0.6)/maxE, base=eh*0.75, bw=ew*0.18;
@@ -736,10 +754,10 @@ function drawEBars(KEi, KEf, Work){
   function eBar(x, val, col, lab){
     const h = Math.max(Math.abs(val)*sc, 2);
     const y = val>=0 ? base-h : base;
-    ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(x,y,bw,h,4); ctx.fill();
-    ctx.fillStyle = '#333'; ctx.font='bold 10px Inter'; ctx.textAlign='center';
-    ctx.fillText(lab, x+bw/2, base+15);
-    ctx.fillText(val.toFixed(1), x+bw/2, y-5);
+    ectx.fillStyle = col; ectx.beginPath(); ectx.roundRect(x,y,bw,h,4); ectx.fill();
+    ectx.fillStyle = '#333'; ectx.font='bold 10px Inter'; ectx.textAlign='center';
+    ectx.fillText(lab, x+bw/2, base+15);
+    ectx.fillText(val.toFixed(1), x+bw/2, y-5);
   }
   
   eBar(ew*0.15, KEi, '#3498db', 'KE initial');
