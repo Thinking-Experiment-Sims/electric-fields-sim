@@ -227,9 +227,17 @@ footer {
         </div>
       </div>
       <canvas id="fieldCanvas" class="sim-canvas"></canvas>
-      <div class="v-legend">
-        <span>0 V</span><div class="v-grad"></div><span>6 V</span>
-        <span style="margin-left:.6rem;font-size:.7rem">1 gu = 1 cm · Pasco paper scale</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:.5rem; flex-wrap:wrap; gap:1rem;">
+        <div class="v-legend" style="margin-top:0">
+          <span>0 V</span><div class="v-grad"></div><span>6 V</span>
+          <span style="margin-left:.6rem;font-size:.70rem">1 gu = 1 cm</span>
+        </div>
+        <div class="toggle-group" style="display:flex; gap:1.2rem; font-size:.85rem; color:var(--text-300);">
+            <label style="flex-direction:row; align-items:center; cursor:pointer; gap:.2rem;"><input type="checkbox" id="chkEq" onchange="redraw()"> Equipotentials</label>
+            <label style="flex-direction:row; align-items:center; cursor:pointer; gap:.2rem;"><input type="checkbox" id="chkFL" onchange="redraw()"> Field Lines</label>
+            <label style="flex-direction:row; align-items:center; cursor:pointer; gap:.2rem;"><input type="checkbox" id="chkArr" onchange="redraw()"> Arrows</label>
+            <label style="flex-direction:row; align-items:center; cursor:pointer; gap:.2rem;"><input type="checkbox" id="chkHt" onchange="redraw()"> Heatmap</label>
+        </div>
       </div>
     </div>
 
@@ -252,20 +260,6 @@ footer {
           <button onclick="clearPts()" style="flex:1;min-width:110px">🗑️ Clear Data</button>
           <button onclick="downloadImage()" style="flex:1;min-width:110px">📸 Download</button>
         </div>
-      </div>
-
-      <!-- FIELD VISUALIZER (ALWAYS SEEN) -->
-      <div id="vPanel" style="margin-bottom: 1.2rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--border)">
-          <div class="panel-head" style="margin-bottom:.42rem">
-            <div class="kicker">Field Overlay</div>
-            <h2 style="font-size:1rem">Visual Options</h2>
-          </div>
-          <div class="toggle-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.2rem;">
-            <label class="toggle-line"><input type="checkbox" id="chkEq"  onchange="redraw()"> Equipotentials</label>
-            <label class="toggle-line"><input type="checkbox" id="chkFL"  onchange="redraw()"> Field Lines</label>
-            <label class="toggle-line"><input type="checkbox" id="chkArr" onchange="redraw()"> Field Arrows</label>
-            <label class="toggle-line"><input type="checkbox" id="chkHt"  onchange="redraw()"> Heatmap</label>
-          </div>
       </div>
 
       <!-- TF PANEL (Free Mode Controls) -->
@@ -367,7 +361,7 @@ footer {
               <input type="range" id="v0Slider" min="0" max="10" step="0.5" value="0" oninput="updateWorkPhysics()">
             </label>
           </div>
-          <div id="wkRes" class="wk-res wk-zer" style="margin-top:.42rem">Set A and B on the field</div>
+          <div id="wkEx" style="font-size: .83rem; line-height: 1.6; margin-top: .6rem; padding: .6rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;"></div>
           <div class="button-row compact" style="margin-top:.38rem">
             <button id="animBtn" onclick="startAnim()">▶ Animate</button>
             <button onclick="resetAnim()">↩ Reset</button>
@@ -724,16 +718,24 @@ function updateWorkPhysics(){
   
   const vfEl = document.getElementById('vfD');
   if(KEf < 0){
-     vfEl.textContent = "Reversed"; vfEl.style.color = "#cc2222";
+     vfEl.textContent = "0.00 m/s"; vfEl.style.color = "#cc2222";
   } else {
      const vf = Math.sqrt(2 * KEf / workMass);
      vfEl.textContent = vf.toFixed(2) + " m/s"; vfEl.style.color = "";
   }
   
-  const res = document.getElementById('wkRes');
-  if(Math.abs(Work)<.05){res.className='wk-res wk-zer';res.innerHTML='W ≈ 0 μJ — Equipotential path no net work';}
-  else if(Work>0){res.className='wk-res wk-pos';res.innerHTML=`W = +${Work.toFixed(2)} μJ — 💨 Field does work (spontaneous)`;}
-  else{res.className='wk-res wk-neg';res.innerHTML=`W = ${Work.toFixed(2)} μJ — ✋ External work needed (push)`;}
+  const ex = document.getElementById('wkEx');
+  const qStr = (workQ>0?'+':'')+workQ+' μC';
+  let WStr = Work.toFixed(2);
+  let expl = `<b>ΔV</b> = V<sub>B</sub> − V<sub>A</sub> = ${(Vb-Va).toFixed(2)} V<br>`;
+  expl += `<b>W<sub>field</sub></b> = −q·ΔV = −(${qStr})·(${(Vb-Va).toFixed(2)}) = <b>${WStr} μJ</b><br>`;
+  
+  if (KEf < 0) {
+      expl += `<span style="color:#cc2222; font-weight:700">Particle does not have enough initial kinetic energy to reach point B. It requires an external push!</span>`;
+  } else {
+      expl += `<b>ΔKE</b> = W<sub>field</sub> = ${WStr} μJ  <span style="color:#aaa">|</span>  <b>ΔPE</b> = ${(-Work).toFixed(2)} μJ`;
+  }
+  ex.innerHTML = expl;
   
   drawEBars(KEi, KEf, Work);
 }
@@ -1025,10 +1027,25 @@ function clearPts(){ points=[]; renderTable(); }
 function clearDrawings(){ drawings=[]; customEqs=[]; customFLs=[]; redraw(); }
 function downloadImage(){ const a=document.createElement('a'); a.href=cvs.toDataURL(); a.download='field.png'; a.click(); }
 function drawRecordedPts(){
+  ctx.save();
   points.forEach(p=>{
     const {px,py} = g2p(+p.x, +p.y);
-    ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2); ctx.fillStyle='#333'; ctx.fill();
+    const col = vCol(p.v/6);
+    ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2); 
+    ctx.fillStyle=col; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='#123140';
+    ctx.font='bold 10px Inter'; ctx.textAlign='center';
+    ctx.fillText(p.v+'V', px, py-8);
   });
+  ctx.restore();
+}
+function setVM(){
+  const el=document.getElementById('vmVal');
+  if(probeOn&&!inEl(probeX,probeY)){
+    el.textContent=probeV.toFixed(2);
+    el.style.color=probeV<.5?'#6699ff':probeV>5.5?'#ff7733':'#00ff88';
+  } else {el.textContent='--.--';el.style.color='#00ff88';}
 }
 function drawManLines(){
   drawings.forEach(s=>{
