@@ -34,9 +34,6 @@
   --ke-color: #e65100;
   --me-color: #2e7d32;
   --pos:#cc2222; --neg:#2244cc;
-  /* School Colors */
-  --uni-purple: #59118e;
-  --uni-gold: #ffc61e;
 }
 
 /* ── Base ────────────────────────────────────────────────────── */
@@ -148,8 +145,8 @@ input[type="text"], input[type="number"], input[type="password"] { font:inherit;
 }
 .t-tabs .tab-btn:hover { background: rgba(0,0,0,0.04); color: var(--text-100); }
 .t-tabs .tab-btn.active { 
-  background: var(--uni-purple); color: #fff; 
-  box-shadow: 0 4px 12px rgba(89, 17, 142, 0.25);
+  background: var(--gold-500); color: #fff; 
+  box-shadow: 0 3px 8px rgba(15, 126, 155, 0.2);
 }
 
 .rm { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:.32rem .48rem; font-size:.76rem; color:var(--text-300); }
@@ -183,13 +180,13 @@ input[type="text"], input[type="number"], input[type="password"] { font:inherit;
 details { border:1px solid var(--border); border-radius:8px; background:rgba(0,0,0,.02); padding:.5rem .65rem; }
 summary { cursor:pointer; color:var(--gold-500); font-weight:700; font-size:.86rem; }
 label { display:flex; flex-direction:column; gap:.3rem; font-size:.9rem; color:var(--text-300); }
-input[type="range"] { width:100%; accent-color:var(--uni-purple); }
-input[type="checkbox"] { width: 1.1rem; height: 1.1rem; accent-color:var(--uni-purple); cursor: pointer; }
+input[type="range"] { width:100%; accent-color:var(--gold-500); }
+input[type="checkbox"] { width: 1.1rem; height: 1.1rem; accent-color:var(--gold-500); cursor: pointer; }
 .toggle-line { 
   flex-direction:row; align-items:center; gap:.6rem; color:var(--text-100); font-size:.88rem; 
   padding: 0.3rem 0.5rem; border-radius: 6px; transition: background 0.15s; cursor: pointer;
 }
-.toggle-line:hover { background: rgba(89, 17, 142, 0.05); }
+.toggle-line:hover { background: rgba(15, 126, 155, 0.05); }
 table { width:100%; border-collapse:collapse; }
 th,td { border:1px solid var(--border); padding:.4rem .52rem; font-size:.83rem; text-align:left; }
 th { background:rgba(0,0,0,.03); font-weight:700; }
