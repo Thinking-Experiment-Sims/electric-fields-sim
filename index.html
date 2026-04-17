@@ -197,16 +197,6 @@ footer {
               <p class="subtitle">Probe voltage at different points — just like the real Pasco conducting-paper lab. Record data, then sketch your own equipotential lines and field lines on paper.</p>
           </div>
       </div>
-      <button id="tModeBtn" class="display-toggle ghost">🔒 Teacher Mode</button>
-  </div>
-
-  <!-- Teacher banner -->
-  <div class="t-banner" id="tBanner">
-    👨‍🏫 Teacher Mode Active
-    <div style="flex:1"></div>
-    <button id="exitTBtn">Exit</button>
-  </div>
-
   <!-- App layout -->
   <div class="app-layout" style="margin-top:.6rem">
 
@@ -248,48 +238,49 @@ footer {
       </div>
 
       <!-- STUDENT panel -->
-      <div id="sPanel">
-        <div class="panel-head" style="margin-bottom:.5rem">
-          <div class="kicker">Student Lab</div>
-          <h2 style="font-size:1rem">Probe &amp; Voltmeter</h2>
-        </div>
-        <div class="vm-wrap">
-          <div class="vm-val" id="vmVal">--.--</div>
-          <div class="vm-lbl">Volts DC</div>
-        </div>
-        <div style="margin-top:.6rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.22rem">
-            <strong style="font-size:.83rem">Data Table</strong>
-            <span id="ptCnt" style="font-size:.73rem;color:var(--text-300)">0 pts</span>
-          </div>
-          <div class="data-scroll">
-            <table><thead><tr><th>#</th><th>X (gu)</th><th>Y (gu)</th><th>V (V)</th></tr></thead>
-            <tbody id="dBody"><tr><td colspan="4" style="text-align:center;color:var(--text-300);padding:.55rem;font-size:.79rem">No points yet</td></tr></tbody></table>
-          </div>
-        </div>
-        <details style="margin-top:.6rem">
-          <summary>Lab Procedure</summary>
-          <ol style="margin:.38rem 0 0 1rem;font-size:.81rem;color:var(--text-300);line-height:1.7">
-            <li>Select a Case (I, II, or III)</li>
-            <li>Hover canvas — probe reads voltage</li>
-            <li>Find 4–5 points at the same voltage (e.g. 5 V)</li>
-            <li>Record each — write coordinates on your paper</li>
-            <li>Connect the dots → that's an equipotential line!</li>
-            <li>Repeat for 1 V, 2 V, 3 V, 4 V</li>
-            <li>Draw field lines perpendicular to equipotentials</li>
-          </ol>
-        </details>
-      </div><!-- /sPanel -->
-
-      <!-- TEACHER panel -->
-      <div id="tPanel" class="hidden">
+      <div id="unifiedPanel">
         <div class="t-tabs">
-          <button class="tab-btn active" id="tfBtn" onclick="setTTab('field')">Field View</button>
-          <button class="tab-btn"        id="twBtn" onclick="setTTab('work')">Work Demo</button>
+          <button class="tab-btn active" id="tsBtn" onclick="setAppMode('student')">Lab Mode</button>
+          <button class="tab-btn"        id="tfBtn" onclick="setAppMode('field')">Field View</button>
+          <button class="tab-btn"        id="twBtn" onclick="setAppMode('work')">Work Demo</button>
+        </div>
+
+        <!-- Student Lab Mode -->
+        <div id="sPanel">
+          <div class="panel-head" style="margin-bottom:.5rem">
+            <div class="kicker">Inquiry Lab</div>
+            <h2 style="font-size:1rem">Probe &amp; Voltmeter</h2>
+          </div>
+          <div class="vm-wrap">
+            <div class="vm-val" id="vmVal">--.--</div>
+            <div class="vm-lbl">Volts DC</div>
+          </div>
+          <div style="margin-top:.6rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.22rem">
+              <strong style="font-size:.83rem">Data Table</strong>
+              <span id="ptCnt" style="font-size:.73rem;color:var(--text-300)">0 pts</span>
+            </div>
+            <div class="data-scroll">
+              <table><thead><tr><th>#</th><th>X (gu)</th><th>Y (gu)</th><th>V (V)</th></tr></thead>
+              <tbody id="dBody"><tr><td colspan="4" style="text-align:center;color:var(--text-300);padding:.55rem;font-size:.79rem">No points yet</td></tr></tbody></table>
+            </div>
+          </div>
+          <details style="margin-top:.6rem">
+            <summary>Lab Procedure</summary>
+            <ol style="margin:.38rem 0 0 1rem;font-size:.81rem;color:var(--text-300);line-height:1.7">
+              <li>Select a Case (I, II, or III)</li>
+              <li>Hover canvas — probe reads voltage</li>
+              <li>Find 4–5 points at the same voltage (e.g. 5 V)</li>
+              <li>Record each — write coordinates on your paper</li>
+              <li>Connect the dots → that's an equipotential line!</li>
+              <li>Repeat for 1 V, 2 V, 3 V, 4 V</li>
+              <li>Draw field lines perpendicular to equipotentials</li>
+            </ol>
+          </details>
         </div>
 
         <!-- Field Visualizer -->
-        <div id="tfPanel">
+        <div id="tfPanel" class="hidden">
           <div class="panel-head" style="margin-bottom:.42rem">
             <div class="kicker">Teacher Overlay</div>
             <h2 style="font-size:1rem">Field Visualizer</h2>
@@ -343,7 +334,7 @@ footer {
             </div>
           </details>
         </div><!-- /twPanel -->
-      </div><!-- /tPanel -->
+      </div><!-- /unifiedPanel -->
 
     </div><!-- /narrow -->
   </div><!-- /app-layout -->
@@ -353,19 +344,7 @@ footer {
   </footer>
 </div><!-- /shell -->
 
-<!-- Login modal -->
-<div class="modal-bg" id="loginModal">
-  <div class="modal-box">
-    <h3>🔒 Teacher Mode</h3>
-    <p style="color:var(--text-300);font-size:.86rem">Enter the password to unlock field visualizer and work demo.</p>
-    <label>Password<input type="password" id="pwIn" placeholder="Enter password…" onkeydown="if(event.key==='Enter')tryLogin()"></label>
-    <div id="pwErr" class="status error hidden" style="margin-top:.38rem;font-size:.8rem">Incorrect password.</div>
-    <div class="button-row" style="margin-top:.85rem">
-      <button onclick="tryLogin()">Unlock</button>
-      <button onclick="closeLogin()">Cancel</button>
-    </div>
-  </div>
-</div>
+
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -971,41 +950,23 @@ function renderTable(){
   document.querySelector('.data-scroll').scrollTop=9999;
 }
 
-// ── Teacher access ─────────────────────────────────────
-document.getElementById('tModeBtn').onclick=()=>{
-  document.getElementById('loginModal').classList.add('open');
-  document.getElementById('pwIn').value='';
-  document.getElementById('pwErr').classList.add('hidden');
-  setTimeout(()=>document.getElementById('pwIn').focus(),80);
-};
-function tryLogin(){
-  if(document.getElementById('pwIn').value==='physics'){closeLogin();enterTeacher();}
-  else{document.getElementById('pwErr').classList.remove('hidden');document.getElementById('pwIn').value='';}
-}
-function closeLogin(){document.getElementById('loginModal').classList.remove('open');}
-function enterTeacher(){
-  mode='teacher-field';
-  document.getElementById('sPanel').classList.add('hidden');
-  document.getElementById('tPanel').classList.remove('hidden');
-  document.getElementById('tBanner').classList.add('on');
-  document.getElementById('tModeBtn').style.display='none';
-  setTTab('field'); redraw();
-}
-document.getElementById('exitTBtn').onclick=()=>{
-  mode='student';
-  document.getElementById('sPanel').classList.remove('hidden');
-  document.getElementById('tPanel').classList.add('hidden');
-  document.getElementById('tBanner').classList.remove('on');
-  document.getElementById('tModeBtn').style.display='';
-  resetAnim(); redraw();
-};
-function setTTab(tab){
-  const isF=tab==='field'; mode=isF?'teacher-field':'teacher-work';
-  document.getElementById('tfPanel').classList.toggle('hidden',!isF);
-  document.getElementById('twPanel').classList.toggle('hidden',isF);
-  document.getElementById('tfBtn').classList.toggle('active',isF);
-  document.getElementById('twBtn').classList.toggle('active',!isF);
-  if(!isF) updateWork(); redraw();
+// ── App Mode switching ─────────────────────────────────
+function setAppMode(m){
+  mode = m === 'student' ? 'student' : m === 'field' ? 'teacher-field' : 'teacher-work';
+  
+  // Update UI visibility
+  document.getElementById('sPanel').classList.toggle('hidden', m !== 'student');
+  document.getElementById('tfPanel').classList.toggle('hidden', m !== 'field');
+  document.getElementById('twPanel').classList.toggle('hidden', m !== 'work');
+  
+  // Update tab active states
+  document.getElementById('tsBtn').classList.toggle('active', m === 'student');
+  document.getElementById('tfBtn').classList.toggle('active', m === 'field');
+  document.getElementById('twBtn').classList.toggle('active', m === 'work');
+  
+  if(m === 'work') updateWork();
+  resetAnim();
+  redraw();
 }
 
 // ── Work Demo ─────────────────────────────────────────
